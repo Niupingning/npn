@@ -1,0 +1,45 @@
+# 编译产物
+build/
+out/
+obj/
+Debug/
+Release/
+*.o
+*.obj
+*.elf
+*.bin
+*.hex
+*.map
+*.a
+*.lib
+*.so
+*.dll
+*.log
+*.lst
+*.sym
+*.srec
+
+# C++ 临时文件
+*.i
+*.ii
+*.s
+*.su
+*.swp
+*.swo
+
+# IDE 配置
+.vscode/
+.idea/
+*.user
+*.uvprojx
+*.uvoptx
+*.ewp
+*.ewd
+*.eww
+
+# 系统临时文件
+*.bak
+*.tmp
+*~
+.DS_Store
+Thumbs.db
