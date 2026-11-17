@@ -62,9 +62,9 @@ void HomeView::HomeInitUpdateMsgMap()
 	//m_MsgMap.insert(make_pair(METER_VMSG_BT_MUSIC_INFO, &HomeView::UpdateBTMusicInfo));
 
 	m_MsgMap.insert(make_pair(METER_VMSG_ACCSTATUS, &HomeView::Update_CP_Show));
-	// m_MsgMap.insert(make_pair(CARPLAY_VMSG_CONNECTSTATUS, &HomeView::Update_CP_Connet));
-	// m_MsgMap.insert(make_pair(ANDRIOD_VMSG_CONNECTSTATUS, &HomeView::Update_AA_Connet));
-	// m_MsgMap.insert(make_pair(SYS_VMSG_USBMOUNT, &HomeView::Update_USB_Insert));	
+	m_MsgMap.insert(make_pair(CARPLAY_VMSG_CONNECTSTATUS, &HomeView::Update_CP_Connet));
+	m_MsgMap.insert(make_pair(ANDRIOD_VMSG_CONNECTSTATUS, &HomeView::Update_AA_Connet));
+	m_MsgMap.insert(make_pair(SYS_VMSG_USBMOUNT, &HomeView::Update_USB_Insert));	
 }
 
 void HomeView::HomeGetUpdateMessageMap(map<int, pUpdateMsg> &nMap)
@@ -219,6 +219,15 @@ bool HomeView::Update_USB_Insert(T_APP_MSG* msg)
 	if(NULL != msg)
 	{
 		m_nUsb_Insert = msg->Param0;
+	}
+	else
+	{
+    	// 进主界面时主动取一次真实状态，避免消息早于 Home 初始化而丢失
+    	MediaView* pMedia = ((IVIView*)GetViewBase())->GetMediaView();
+    	if (NULL != pMedia)
+    	{
+        	m_nUsb_Insert = pMedia->GetUsbInsert();
+    	}
 	}
 
 	if(1 == m_nUsb_Insert)

@@ -84,7 +84,7 @@ void SplitView::SplitUpdateNoDevice(int nPage)
 	p->ShowItem(UIID_WNDID_SPLIT, UIID_SPLIT_NO_DEVICE, bNoDevice);
 }
 
-/* 点分页点切页；业务按钮转发给现有 View（方案A：复用播放逻辑） */
+/* 点分页点切页；业务按钮转发给现有View */
 void SplitView::SplitOnClick(CUIWndMng* pUI, long nCtrlId, int nBtState)
 {
 	switch (nCtrlId)
@@ -247,7 +247,7 @@ void SplitView::SplitUpdateBTMusic()
 	BTData &mBT = BTData::GetInstance();
 
 	// 歌名/歌手/专辑
-	BtMusicInfo_t tInfo;                       // ← 类型改名
+	BtMusicInfo_t tInfo;
 	mBT.GetBTMusicInfo(tInfo);
 	char szTitle[2*1024] = {0}, szArtist[2*1024] = {0}, szAlbum[2*1024] = {0};
 	size_t nLen = 1024;
@@ -261,7 +261,7 @@ void SplitView::SplitUpdateBTMusic()
 	p->SetItemText(UIID_WNDID_SPLIT, UIID_SPLIT_BT_ARTIST, (wchar_t*)szArtist);
 	p->SetItemText(UIID_WNDID_SPLIT, UIID_SPLIT_BT_ALBUM,  (wchar_t*)szAlbum);
 
-	// 播放/暂停图标（保留你原来的）
+	// 播放/暂停图标
 	int nStatus = mBT.GetBTMusicStatus();
 	if (1 == nStatus)
 	{

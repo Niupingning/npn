@@ -183,6 +183,7 @@ void IVIView::ShowFirstWnd(std::string strParam)
 	{
 		ShowWnd(UIID_WNDID_MAIN, true);
 	}
+	SetTimer(TIMERID_SPLIT_DEBUG, 1000);   // 临时：启动窗口调试器
 }
 
 bool IVIView::OnMouseMove(POINT point)
@@ -618,6 +619,28 @@ void IVIView::OnTimer(uint32_t id)
 				ShowWnd(UIID_WNDID_DEMO,true);
 				SetTimer(TIMERID_DEMO_SET_PIC,3*1000);
 			}
+		}
+		break;
+		case TIMERID_SPLIT_DEBUG:
+		{
+			static int s_nLastCmd = -2;
+			int nCmd = -1;
+			FILE *fp = fopen("/tmp/split_test", "r");
+			if (NULL != fp)
+			{
+				if (1 != fscanf(fp, "%d", &nCmd)) nCmd = -1;
+				fclose(fp);
+			}
+			if (nCmd != s_nLastCmd)
+			{
+				s_nLastCmd = nCmd;
+				if (nCmd > 0)
+				{
+					LOGDBG("DBG show wnd %d", nCmd);
+					ShowWnd(nCmd, true);
+				}
+			}
+			SetTimer(TIMERID_SPLIT_DEBUG, 1000);   // 这个框架的定时器是一次性的，必须重新挂
 		}
 		break;
 		default:
