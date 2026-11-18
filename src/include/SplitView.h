@@ -14,6 +14,7 @@ public:
 	void SplitOnClick(CUIWndMng* pUI, long nCtrlId, int nBtState);
 	bool SplitOnUserMessage(T_APP_MSG* msg);
 	void SplitSwipe(int nDir);
+	void SplitRefreshMedia();   // 播放中由 MediaView 定时调用，刷新分屏媒体卡片
 
 private:
 	void SplitUpdateRadio();
@@ -21,6 +22,7 @@ private:
 	void SplitUpdateUSB();
 	void SplitUpdatePageDot();
 	void SplitUpdateNoDevice(int nPage);
+	void SplitEnableTextFeature();
 	int  SplitPickDefaultPage();
 	int  MapSplitToBT(int nCtrlId);
 	int  MapSplitToMedia(int nCtrlId);

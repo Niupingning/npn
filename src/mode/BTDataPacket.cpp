@@ -308,7 +308,7 @@ bool BTDataPacket::HandleWirelessSerData(T_STR_DATA_PACKET tPacket, T_APP_MSG& m
 				BtPlaybackTime_t *tBtMusicTime = (BtPlaybackTime_t*)tPacket.Buf;
 				if(NULL != tBtMusicTime)
 				{
-					//mData.SaveBTMusicTime(tBtMusicTime);
+					mData.SaveBTMusicTime(tBtMusicTime);
 					LOGDBG("-----XSJXSJ-BTMUSICTIME-----dCurrentTime = %d",tBtMusicTime->dCurrentTime);
 					msg.Message = METER_VMSG_BT_MUSIC_TIME;
 					msg.Param0 = tBtMusicTime->dCurrentTime;

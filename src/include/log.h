@@ -53,6 +53,9 @@
 #ifndef LOGGER_H
 #define LOGGER_H
 
+#include <stdio.h>
+#include <stdarg.h>
+#include <pthread.h>
 #include <strings.h>
 #include <android/log.h>
 
@@ -70,6 +73,57 @@
 #define LOGFATAL(fmt, ...)    __android_log_print(ANDROID_LOG_FATAL, LOG_TAGT, "[%s:%d]-" fmt, __FUNCTION__, __LINE__,##__VA_ARGS__)
 #define LOGSILENT(fmt, ...)    __android_log_print(ANDROID_LOG_SILENT, LOG_TAGT, "[%s:%d]-" fmt, __FUNCTION__, __LINE__,##__VA_ARGS__)
 
+/* ===== 调试用：关键日志同时落盘，便于离线查看 =====
+ * 路径：/media/flash/userdata/ivi_dbg.log（flash 分区，重启不丢）
+ * 用法：把关心的那几处 LOGDBG 旁边再加一句 LOGFILE(...)
+ * 文件超过 2MB 自动清空重写，避免写满 flash
+ */
+#ifndef IVI_LOG_FILE_PATH
+#define IVI_LOG_FILE_PATH "/media/flash/userdata/ivi_dbg.log"
+#endif
+
+#define IVI_LOG_FILE_MAX_SIZE   (2 * 1024 * 1024)
+
+inline void ivi_log_to_file(const char *func, int line, const char *fmt, ...)
+{
+	static pthread_mutex_t s_mtx = PTHREAD_MUTEX_INITIALIZER;
+
+	pthread_mutex_lock(&s_mtx);
+
+	FILE *fpCheck = fopen(IVI_LOG_FILE_PATH, "r");
+	if (NULL != fpCheck)
+	{
+		long nSize = 0;
+		fseek(fpCheck, 0, SEEK_END);
+		nSize = ftell(fpCheck);
+		fclose(fpCheck);
+		if (nSize > IVI_LOG_FILE_MAX_SIZE)
+		{
+			// 超过上限就清空重来，反正只是复现用的
+			fpCheck = fopen(IVI_LOG_FILE_PATH, "w");
+			if (NULL != fpCheck)
+			{
+				fclose(fpCheck);
+			}
+		}
+	}
+
+	FILE *fp = fopen(IVI_LOG_FILE_PATH, "a");
+	if (NULL != fp)
+	{
+		va_list ap;
+		fprintf(fp, "[%s:%d]-", func, line);
+		va_start(ap, fmt);
+		vfprintf(fp, fmt, ap);
+		va_end(ap);
+		fprintf(fp, "\n");
+		fclose(fp);
+	}
+
+	pthread_mutex_unlock(&s_mtx);
+}
+
+#define LOGFILE(fmt, ...)   ivi_log_to_file(__FUNCTION__, __LINE__, fmt, ##__VA_ARGS__)
 
 
 #endif 

@@ -183,7 +183,6 @@ void IVIView::ShowFirstWnd(std::string strParam)
 	{
 		ShowWnd(UIID_WNDID_MAIN, true);
 	}
-	SetTimer(TIMERID_SPLIT_DEBUG, 1000);   // 临时：启动窗口调试器
 }
 
 bool IVIView::OnMouseMove(POINT point)
@@ -587,7 +586,9 @@ void IVIView::OnListInfoMessage(CUIWndMng *pUI, int nWndId, int nCtrlId, PLIST_I
 
 void IVIView::OnShow(LONG dwWndId, bool bShow, int nStyle)
 {
-	LOGDBG("OnShow Wnd ID Is %d", dwWndId);
+	// LOGDBG("OnShow Wnd ID Is %d", dwWndId);
+	LOGDBG("OnShow Wnd ID Is %d bShow=%d", dwWndId, (int)bShow);
+	LOGFILE("OnShow wnd=%d bShow=%d", dwWndId, (int)bShow);
 	//EnableAlphaBlending(true);
 	//m_RadioView.SendMeterInfoDataOFBreakAuto();
 	SetCurrWnd(dwWndId);
@@ -621,26 +622,14 @@ void IVIView::OnTimer(uint32_t id)
 			}
 		}
 		break;
-		case TIMERID_SPLIT_DEBUG:
+		case TIMERID_SPLIT_REPAINT:
 		{
-			static int s_nLastCmd = -2;
-			int nCmd = -1;
-			FILE *fp = fopen("/tmp/split_test", "r");
-			if (NULL != fp)
+			// 分屏显示后延迟补画：视频层resize完成后，只重绘右侧卡片区，避免被视频层盖住
+			if (UIID_WNDID_SPLIT == GetCurrWnd())
 			{
-				if (1 != fscanf(fp, "%d", &nCmd)) nCmd = -1;
-				fclose(fp);
+				RECT rc = {1280, 0, 1920, 720};
+				GetUIWndMgrWrapper()->drawAllItem(rc);
 			}
-			if (nCmd != s_nLastCmd)
-			{
-				s_nLastCmd = nCmd;
-				if (nCmd > 0)
-				{
-					LOGDBG("DBG show wnd %d", nCmd);
-					ShowWnd(nCmd, true);
-				}
-			}
-			SetTimer(TIMERID_SPLIT_DEBUG, 1000);   // 这个框架的定时器是一次性的，必须重新挂
 		}
 		break;
 		default:
@@ -654,12 +643,18 @@ void IVIView::OnSplitScreenChange(int nSplit, int nAppType)
 {
 	int nAppStatus = APP_STATUS_NO;
 	HomeData::GetInstance().GetINTData(INT_APPSTATUS, nAppStatus);
+	LOGDBG("OnSplitScreenChange split=%d appType=%d appStatus=%d", nSplit, nAppType, nAppStatus);
 
-	// 只有当前正在显示对应的 CP/AA 时才立即切窗口
-	// 否则状态已存，等 CP/AA 切前台时由 Update_CP_Show 自动应用
 	if (nAppType == nAppStatus)
 	{
-		ShowWnd(UIID_WNDID_SPLIT, (1 == nSplit));
+		ShowSplitWnd(1 == nSplit);
+		
+		if (nSplit)
+		{
+			RECT rc = {1280, 0, 1920, 720};
+			GetUIWndMgrWrapper()->drawAllItem(rc);
+			LOGDBG("OnSplitScreenChange repaint right done");
+		}
 	}
 }
 
@@ -1226,6 +1221,65 @@ void IVIView::SendBtAudio_Pause()
 	m_BTPhoneView.OnNeed_Pause();
 }
 
+// 分屏/全屏切换统一入口
+void IVIView::ShowSplitWnd(bool bSplit)
+{
+	CUIWndMgrWrapper* pUI = GetUIWndMgrWrapper();
+	long nCurWnd = (NULL != pUI) ? (long)pUI->GetCurWndID() : -1;
+	LOGDBG("ShowSplitWnd bSplit=%d curWnd=%ld", bSplit, nCurWnd);
+	LOGFILE("ShowSplitWnd bSplit=%d curWnd=%ld", bSplit, nCurWnd);
+    if (bSplit)
+    {
+		if ((NULL != pUI) && (UIID_WNDID_SPLIT != pUI->GetCurWndID()))
+		{
+			ShowWnd(UIID_WNDID_SPLIT, false);
+		}
+		ShowWnd(UIID_WNDID_SPLIT, true);
+
+		RECT rc = {1280, 0, 1920, 720};
+		GetUIWndMgrWrapper()->drawAllItem(rc);
+    }
+    else
+    {
+        ShowWnd(UIID_WNDID_SPLIT, false);
+        ShowWnd(UIID_WNDID_BLACK, true);
+        DrawAllItem();
+    }
+}
+
+void IVIView::CloseSplitWnd()
+{
+	if (m_bClosingSplit)
+	{
+		LOGDBG("CloseSplitWnd reenter, skip");
+		return;
+	}
+	m_bClosingSplit = true;
+
+	CUIWndMgrWrapper* pUI = GetUIWndMgrWrapper();
+	if (NULL == pUI)
+	{
+		m_bClosingSplit = false;
+		return;
+	}
+	long nCurWnd = (long)pUI->GetCurWndID();
+	LOGDBG("CloseSplitWnd curWnd=%ld", nCurWnd);
+	LOGFILE("CloseSplitWnd curWnd=%ld", nCurWnd);
+
+	if (UIID_WNDID_SPLIT != pUI->GetCurWndID())
+	{
+		LOGDBG("CloseSplitWnd skip: split not on top");
+		m_bClosingSplit = false;
+		return;
+	}
+
+	ShowWnd(UIID_WNDID_SPLIT, false);   // 先藏分屏
+	ShowWnd(UIID_WNDID_MAIN, true);     // 回主界面，顺带盖掉卡片残影
+	DrawAllItem();
+
+	m_bClosingSplit = false;
+}
+
 void IVIView::SetWindow_BK(int nWnd,int nPicId)
 {
 	CUIWndMgrWrapper *pUIMgr = GetUIWndMgrWrapper();
@@ -1300,6 +1354,11 @@ void IVIView::OnHandle_Source(int nSource)
 		default:
 		break;
 	}
+}
+
+void IVIView::UpdateSplitMediaView()
+{
+	m_SplitView.SplitRefreshMedia();
 }
 
 void IVIView::OnTimer_DemoView()

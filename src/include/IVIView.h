@@ -117,6 +117,10 @@ public:
 	RadioView*  GetRadioView()  { return &m_RadioView; }
 	BTView*     GetBTView()     { return &m_BTPhoneView; }
 	MediaView*  GetMediaView()  { return &m_MediaView; }
+	SplitView*  GetSplitView()  { return &m_SplitView; }
+	void        ShowSplitWnd(bool bSplit);   // 分屏(30)/全屏CP-AA(13) 统一切换
+	void        CloseSplitWnd();             // CP/AA断开时收起分屏（不清状态）
+	void        UpdateSplitMediaView();   // 分屏在显示时刷新媒体卡片
 protected:
 	/*
 	 * call back APPS Message info*/
@@ -179,6 +183,7 @@ private:
 
 	int m_nCurrWnd;
 	int m_nLastWnd;
+	bool m_bClosingSplit = false;
 	MutexLock m_MutexSelfCheck;
 	MutexLock m_MutexAutoTest;
 	MutexLock m_Lock;

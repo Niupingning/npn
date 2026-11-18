@@ -4,6 +4,7 @@
 #include "RadioData.h"
 #include "BTData.h"
 #include "MediaView.h"
+#include "MediaData.h"
 
 #include <wchar.h>
 
@@ -31,6 +32,32 @@ void SplitView::SplitInitWorkWnd()
 
 	m_nCurPage = SplitPickDefaultPage();
 	SplitSetPage(m_nCurPage);
+	SplitEnableTextFeature();
+}
+
+/* 文字控件统一设为单行 + 超长滚动，防止换行/竖排 */
+void SplitView::SplitEnableTextFeature()
+{
+	CUIAnalysis* p = GetViewBase()->GetUIWndMgrWrapper()->GetUIAnalysisObj();
+	if (NULL == p) return;
+
+	const int arrId[] = {
+		UIID_SPLIT_MEDIA_TITLE,  UIID_SPLIT_MEDIA_ARTIST, UIID_SPLIT_MEDIA_ALBUM,
+		UIID_SPLIT_BT_TITLE,     UIID_SPLIT_BT_ARTIST,    UIID_SPLIT_BT_ALBUM,
+		UIID_SPLIT_RADIO_FREQ,   UIID_SPLIT_RADIO_PS,
+	};
+
+	for (int i = 0; i < (int)(sizeof(arrId) / sizeof(arrId[0])); i++)
+	{
+		BOOL bSingle = TRUE;
+		p->SetItemParameter(UIID_WNDID_SPLIT, arrId[i], SINGLE_LINE_MODE, (void*)&bSingle);
+
+		BOOL bScroll = TRUE;
+		p->SetItemParameter(UIID_WNDID_SPLIT, arrId[i], BTN_SCROLL_TEXT, (void*)&bScroll);
+
+		unsigned int nMode = CLSSAIC_SCROLL_MODE;
+		p->SetItemParameter(UIID_WNDID_SPLIT, arrId[i], CTRL_DISPLAY_SETTING, (void*)&nMode);
+	}
 }
 
 /* 切页：显示对应组、隐藏其它组、刷分页点、刷内容 */
@@ -44,6 +71,19 @@ void SplitView::SplitSetPage(int nPage)
 	p->ShowItem(UIID_WNDID_SPLIT, UIID_SPLIT_GROUP_RADIO, SPLIT_PAGE_RADIO == nPage);
 	p->ShowItem(UIID_WNDID_SPLIT, UIID_SPLIT_GROUP_BT,    SPLIT_PAGE_BT    == nPage);
 	p->ShowItem(UIID_WNDID_SPLIT, UIID_SPLIT_GROUP_USB,   SPLIT_PAGE_USB   == nPage);
+
+	// 顶部媒体源名称随分页切换
+	const wchar_t *pName = L"Radio";
+	if(SPLIT_PAGE_BT  == nPage)
+	{
+		pName = L"Bluetooth Audio";
+	}
+	else if(SPLIT_PAGE_USB == nPage)
+	{
+		pName = L"USB";
+	}
+	p->SetItemText(UIID_WNDID_SPLIT, UIID_SPLIT_MEDIA_NAME, pName);
+
 	SplitUpdatePageDot();
 	SplitUpdateNoDevice(nPage);
 
@@ -81,10 +121,19 @@ void SplitView::SplitUpdateNoDevice(int nPage)
 	{
 		bNoDevice = (!m_bUSBMounted);
 	}
+
+	if (SPLIT_PAGE_BT == nPage)
+	{
+		p->ShowItem(UIID_WNDID_SPLIT, UIID_SPLIT_GROUP_BT, !bNoDevice);
+	}
+	else if (SPLIT_PAGE_USB == nPage)
+	{
+		p->ShowItem(UIID_WNDID_SPLIT, UIID_SPLIT_GROUP_USB, !bNoDevice);
+	}
+
 	p->ShowItem(UIID_WNDID_SPLIT, UIID_SPLIT_NO_DEVICE, bNoDevice);
 }
 
-/* 点分页点切页；业务按钮转发给现有View */
 void SplitView::SplitOnClick(CUIWndMng* pUI, long nCtrlId, int nBtState)
 {
 	switch (nCtrlId)
@@ -98,7 +147,6 @@ void SplitView::SplitOnClick(CUIWndMng* pUI, long nCtrlId, int nBtState)
 	IVIView *pView = (IVIView*)GetViewBase();
 	if (SPLIT_PAGE_RADIO == m_nCurPage)
 	{
-		// Radio 卡片ID 与收音机窗口完全一致，直接复用
 		pView->GetRadioView()->RadioOnClick(pUI, UIID_WNDID_RADIO, nCtrlId, nBtState);
 	}
 	else if (SPLIT_PAGE_BT == m_nCurPage)
@@ -111,7 +159,6 @@ void SplitView::SplitOnClick(CUIWndMng* pUI, long nCtrlId, int nBtState)
 	}
 }
 
-/* 消息来了就刷对应页 */
 bool SplitView::SplitOnUserMessage(T_APP_MSG* msg)
 {
 	if (SYS_VMSG_USBMOUNT == msg->Message)
@@ -124,17 +171,31 @@ bool SplitView::SplitOnUserMessage(T_APP_MSG* msg)
 			if (METER_VMSG_UPDATE_RADIOINFO == msg->Message) SplitUpdateRadio();
 			break;
 		case SPLIT_PAGE_BT:
-			if (METER_VMSG_BT_MUSIC_INFO == msg->Message ||
-				METER_VMSG_BT_MUSIC_TIME == msg->Message ||
-				METER_VMSG_BT_MUSICPLAY_STATE == msg->Message ||
-				METER_VMSG_BT_CONNECTED_STATE == msg->Message)
+			if (METER_VMSG_BT_CONNECTED_STATE == msg->Message)
+			{
+				// 连接/断开要切换 No Device 与正常卡片
+				SplitUpdateNoDevice(SPLIT_PAGE_BT);
 				SplitUpdateBTMusic();
+			}
+			else if (METER_VMSG_BT_MUSIC_INFO == msg->Message ||
+				METER_VMSG_BT_MUSIC_TIME == msg->Message ||
+				METER_VMSG_BT_MUSICPLAY_STATE == msg->Message)
+			{
+				SplitUpdateBTMusic();
+			}
 			break;
 		case SPLIT_PAGE_USB:
-			if (MEDIA_VMSG_PLAYSTATUS == msg->Message ||
-				MEDIA_VMSG_PLAYTIME == msg->Message ||
-				SYS_VMSG_USBMOUNT == msg->Message)
+			if (SYS_VMSG_USBMOUNT == msg->Message)
+			{
+				// 插拔 U 盘要切换 No Device 与正常卡片
+				SplitUpdateNoDevice(SPLIT_PAGE_USB);
 				SplitUpdateUSB();
+			}
+			else if (MEDIA_VMSG_PLAYSTATUS == msg->Message ||
+				MEDIA_VMSG_PLAYTIME == msg->Message)
+			{
+				SplitUpdateUSB();
+			}
 			break;
 	}
 	return true;
@@ -292,9 +353,6 @@ void SplitView::SplitUpdateBTMusic()
 	// 进度条
 	int nPercent = (nTotal > 0) ? (nCur * 100 / nTotal) : 0;
 	p->SetProgressItemPos(UIID_WNDID_SPLIT, UIID_SPLIT_BT_PROGRESS, nPercent);
-
-	// 封面（BT 无专辑图，用默认图标）
-	p->SetItemIcon(UIID_WNDID_SPLIT, UIID_SPLIT_BT_PIC, 204, ALL_STATE);
 }
 
 /* ==================== USB 音乐卡片数据刷新 ==================== */
@@ -308,36 +366,84 @@ void SplitView::SplitUpdateUSB()
 	char szUrl[512] = {0};
 	pMedia->GetPlayInfo(nStatus, nPos, nTotal, szUrl, sizeof(szUrl));
 
-	// 播放/暂停图标
-	if (1 == nStatus)
+	static int s_nLastStatus = -1;
+	if (s_nLastStatus != nStatus)
 	{
-		p->ShowItem(UIID_WNDID_SPLIT, UIID_SPLIT_MEDIA_PLAY,  false);
-		p->ShowItem(UIID_WNDID_SPLIT, UIID_SPLIT_MEDIA_PAUSE, true);
-	}
-	else
-	{
-		p->ShowItem(UIID_WNDID_SPLIT, UIID_SPLIT_MEDIA_PLAY,  true);
-		p->ShowItem(UIID_WNDID_SPLIT, UIID_SPLIT_MEDIA_PAUSE, false);
+		s_nLastStatus = nStatus;
+		if (1 == nStatus)
+		{
+			p->ShowItem(UIID_WNDID_SPLIT, UIID_SPLIT_MEDIA_PLAY,  false);
+			p->ShowItem(UIID_WNDID_SPLIT, UIID_SPLIT_MEDIA_PAUSE, true);
+		}
+		else
+		{
+			p->ShowItem(UIID_WNDID_SPLIT, UIID_SPLIT_MEDIA_PLAY,  true);
+			p->ShowItem(UIID_WNDID_SPLIT, UIID_SPLIT_MEDIA_PAUSE, false);
+		}
 	}
 
 	// 时间
 	wchar_t wszTime[32] = {0}, wszTotal[32] = {0};
-	swprintf(wszTime,  32, L"%02d:%02d", nPos   / 1000 / 60, nPos   / 1000 % 60);
-	swprintf(wszTotal, 32, L"%02d:%02d", nTotal / 1000 / 60, nTotal / 1000 % 60);
+	swprintf(wszTime,  32, L"%02d:%02d", nPos   / 60, nPos   % 60);
+	swprintf(wszTotal, 32, L"%02d:%02d", nTotal / 60, nTotal % 60);
 	p->SetItemText(UIID_WNDID_SPLIT, UIID_SPLIT_MEDIA_TIME,  wszTime);
-	p->SetItemText(UIID_WNDID_SPLIT, UIID_SPLIT_MEDIA_TOTAL, wszTotal);
+	static wchar_t s_wszTotal[32] = {0};
+	if (0 != wcscmp(s_wszTotal, wszTotal))
+	{
+		wcscpy(s_wszTotal, wszTotal);
+		p->SetItemText(UIID_WNDID_SPLIT, UIID_SPLIT_MEDIA_TOTAL, wszTotal);
+	}
 
 	// 进度条（百分比）
 	int nPercent = (nTotal > 0) ? (nPos * 100 / nTotal) : 0;
 	p->SetProgressItemPos(UIID_WNDID_SPLIT, UIID_SPLIT_MEDIA_PROGRESS, nPercent);
 
 	// 歌名/歌手/专辑
-	char szTitle[256] = {0}, szArtist[256] = {0}, szAlbum[256] = {0};
-	pMedia->GetPlayID3Info(szTitle, szArtist, szAlbum, sizeof(szTitle));
-	p->SetItemText(UIID_WNDID_SPLIT, UIID_SPLIT_MEDIA_TITLE,  (wchar_t*)szTitle);
-	p->SetItemText(UIID_WNDID_SPLIT, UIID_SPLIT_MEDIA_ARTIST, (wchar_t*)szArtist);
-	p->SetItemText(UIID_WNDID_SPLIT, UIID_SPLIT_MEDIA_ALBUM,  (wchar_t*)szAlbum);
+	wchar_t szTitle[256] = {0}, szArtist[256] = {0}, szAlbum[256] = {0};
+	pMedia->GetPlayID3Info(szTitle, szArtist, szAlbum, 256);
 
-	// 封面（暂无真实专辑图，用默认图标 204；和媒体页默认封面一致）
-	p->SetItemIcon(UIID_WNDID_SPLIT, UIID_SPLIT_MEDIA_PIC, 204, ALL_STATE);
+	static wchar_t s_szTitle[256]  = {0};
+	static wchar_t s_szArtist[256] = {0};
+	static wchar_t s_szAlbum[256]  = {0};
+	if (0 != wcscmp(s_szTitle, szTitle))
+	{
+		wcscpy(s_szTitle, szTitle);
+		p->SetItemText(UIID_WNDID_SPLIT, UIID_SPLIT_MEDIA_TITLE, szTitle);
+	}
+	if (0 != wcscmp(s_szArtist, szArtist))
+	{
+		wcscpy(s_szArtist, szArtist);
+		p->SetItemText(UIID_WNDID_SPLIT, UIID_SPLIT_MEDIA_ARTIST, szArtist);
+	}
+	if (0 != wcscmp(s_szAlbum, szAlbum))
+	{
+		wcscpy(s_szAlbum, szAlbum);
+		p->SetItemText(UIID_WNDID_SPLIT, UIID_SPLIT_MEDIA_ALBUM, szAlbum);
+	}
+
+	// 播放模式 / 随机播放图标（和全屏媒体页保持一致）
+	int nPicMode = (PLAY_MODE_ONE == pMedia->GetPlayMode()) ? 224 : 220;
+	static int s_nLastMode = -1;
+	if (s_nLastMode != nPicMode)
+	{
+		s_nLastMode = nPicMode;
+		p->SetItemIcon(UIID_WNDID_SPLIT, UIID_SPLIT_MEDIA_LOOP, nPicMode, ALL_STATE);
+	}
+
+	int nPicShuffle = pMedia->GetPlayShuffle() ? 234 : 232;
+	static int s_nLastShuffle = -1;
+	if (s_nLastShuffle != nPicShuffle)
+	{
+		s_nLastShuffle = nPicShuffle;
+		p->SetItemIcon(UIID_WNDID_SPLIT, UIID_SPLIT_MEDIA_SHUFFLE, nPicShuffle, ALL_STATE);
+	}
+}
+
+/* 分屏媒体卡片跟随播放刷新：MediaView 每秒 tick 时调用 */
+void SplitView::SplitRefreshMedia()
+{
+	if (SPLIT_PAGE_USB == m_nCurPage)
+	{
+		SplitUpdateUSB();
+	}
 }

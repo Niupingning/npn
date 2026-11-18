@@ -98,15 +98,13 @@ bool HomeView::Update_CP_Show(T_APP_MSG* msg)
 {
 	if(UIID_WNDID_MAIN == msg->Param0)
 	{
-		//CP在后台显示home窗口
-		//GetViewBase()->ShowWnd(UIID_WNDID_MAIN, true);
 		int nCurWnd = ((IVIView*)GetViewBase())->GetCurrWnd();
 		if((nCurWnd == UIID_WNDID_AVM) || (nCurWnd == UIID_WNDID_BLACK))
 		{
 			GetViewBase()->ShowWnd(UIID_WNDID_SPLIT, false);
 			GetViewBase()->ShowWnd(UIID_WNDID_MAIN, true);
 		}
-		else
+		else if (UIID_WNDID_MAIN != nCurWnd)
 		{
 			GetViewBase()->ShowWnd(nCurWnd, true);
 		}
@@ -116,6 +114,7 @@ bool HomeView::Update_CP_Show(T_APP_MSG* msg)
 	else if(UIID_WNDID_BLACK == msg->Param0)
 	{
 		LOGDBG("&&&----cp---show");
+		LOGFILE("cp---show Param0=%d", msg->Param0);
 		int nCurSource = ((IVIView*)GetViewBase())->Get_CurSource();
 		if(nCurSource != IVI_SOURCE_CPAA)
 		{
@@ -124,7 +123,6 @@ bool HomeView::Update_CP_Show(T_APP_MSG* msg)
 		}
 		GetViewBase()->ShowWnd(UIID_WNDID_BLACK, true);
 
-		// 应用保存的分屏状态：之前是分屏就显示卡片，否则隐藏
 		HomeData &mData = HomeData::GetInstance();
 		int nAppStatus = APP_STATUS_NO;
 		int nSplit = 0;
@@ -133,7 +131,7 @@ bool HomeView::Update_CP_Show(T_APP_MSG* msg)
 			mData.GetINTData(INT_CP_SPLITSTATUS, nSplit);
 		else if (APP_STATUS_AA == nAppStatus)
 			mData.GetINTData(INT_AA_SPLITSTATUS, nSplit);
-		GetViewBase()->ShowWnd(UIID_WNDID_SPLIT, (1 == nSplit));
+		((IVIView*)GetViewBase())->ShowSplitWnd(1 == nSplit);
 
 		KillTimer(TIMERID_CPAA_SIGN);
 		SetTimer(TIMERID_CPAA_SIGN,2000);
@@ -161,6 +159,7 @@ bool HomeView::Update_CP_Connet(T_APP_MSG* msg)
 	mData.GetINTData(INT_CARPLAYCONNECTSTATUS, nCPConnectStatus);
 
 	LOGDBG("&&&&----nCPConnectStatus:%d",nCPConnectStatus);
+	LOGFILE("CPConn=%d", nCPConnectStatus);
 
 	if(1 == nCPConnectStatus)
 	{
@@ -172,6 +171,13 @@ bool HomeView::Update_CP_Connet(T_APP_MSG* msg)
 		//cp diconnect icon disable
 		pUIMgr->GetUIAnalysisObj()->SetItemIcon(UIID_WNDID_MAIN,UIID_HOME_CP,16,ITEM_STATE_DISABLE);
 		pUIMgr->GetUIAnalysisObj()->SetItemState(UIID_WNDID_MAIN,UIID_HOME_CP,ITEM_STATE_DISABLE);
+
+		int nAppStatus = APP_STATUS_NO;
+		mData.GetINTData(INT_APPSTATUS, nAppStatus);
+		if ((nullptr != msg) && (APP_STATUS_CP == nAppStatus))
+		{
+			((IVIView*)GetViewBase())->CloseSplitWnd();
+		}
 	}
 
 	return true;
@@ -202,6 +208,13 @@ bool HomeView::Update_AA_Connet(T_APP_MSG* msg)
 		//cp diconnect icon disable
 		pUIMgr->GetUIAnalysisObj()->SetItemIcon(UIID_WNDID_MAIN,UIID_HOME_AA,15,ITEM_STATE_DISABLE);
 		pUIMgr->GetUIAnalysisObj()->SetItemState(UIID_WNDID_MAIN,UIID_HOME_AA,ITEM_STATE_DISABLE);
+
+		int nAppStatus = APP_STATUS_NO;
+		mData.GetINTData(INT_APPSTATUS, nAppStatus);
+		if ((nullptr != msg) && (APP_STATUS_AA == nAppStatus))
+		{
+			((IVIView*)GetViewBase())->CloseSplitWnd();
+		}
 	}
 
 	return true;
@@ -222,7 +235,6 @@ bool HomeView::Update_USB_Insert(T_APP_MSG* msg)
 	}
 	else
 	{
-    	// 进主界面时主动取一次真实状态，避免消息早于 Home 初始化而丢失
     	MediaView* pMedia = ((IVIView*)GetViewBase())->GetMediaView();
     	if (NULL != pMedia)
     	{
@@ -346,22 +358,6 @@ int HomeView::GetCurrWnd()
 
 void HomeView::HomeInitWorkWnd()
 {
-	// 原始版本
-	// LOGDBG("HomeInitWorkWnd");
-	// /*CUIWndMgrWrapper *pUIMgr = GetViewBase()->GetUIWndMgrWrapper();
-	// if (nullptr == pUIMgr)
-	// {
-	// 	LOGDBG("nullptr == pUIMgr Error!!");
-	// 	return;
-	// }*/
-	// //pUIMgr->GetUIAnalysisObj()->SetItemIcon(UIID_WNDID_MAIN,UIID_LEFTCOLUMN_APPICON_BIN,UUID_PICID_LEFTCOLUMN_APPICON_PIC,ALL_STATE);
-	// Update_CP_Connet();
-	// Update_AA_Connet();
-	// Update_USB_Insert();
-
-	// Update_Avm_Icon();
-	// 原始版本
-	// 适配GUI显示该项目无该功能
 	LOGDBG("HomeInitWorkWnd");
 
 	Update_CP_Connet();
@@ -376,12 +372,10 @@ void HomeView::HomeInitWorkWnd()
 		return;
 	}
 
-	// 本项目无 DTS/TI 功能，主界面图标置灰
 	pUIMgr->GetUIAnalysisObj()->SetItemState(
 		UIID_WNDID_MAIN, UIID_HOME_DTS, ITEM_STATE_DISABLE);
 	pUIMgr->GetUIAnalysisObj()->SetItemState(
 		UIID_WNDID_MAIN, UIID_HOME_TI, ITEM_STATE_DISABLE);
-	// 适配GUI显示该项目无该功能
 }
 
 void HomeView::HomeUpdateHomeContenInfo(const int nCtrlId, const int nBtStat, const bool nShow)
@@ -504,7 +498,6 @@ void HomeView::HomeUpdateHomeContenInfo(const int nCtrlId, const int nBtStat, co
 		case UIID_HOME_DTS:
 		case UIID_HOME_TI:
 		{
-			// 本项目无 DTS/TI 功能，禁止进入对应窗口
 			LOGDBG("DTS/TI function is disabled, ignore click, id=%d", nCtrlId);
 		}
 		break;

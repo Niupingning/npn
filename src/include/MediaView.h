@@ -86,10 +86,12 @@ public:
 	void VideoPlayTool_ShowHide();
 
 	void GetPlayInfo(int &nStatus, int &nPos, int &nTotal, char *pszUrl, int nLen);
+	int  GetPlayMode()    { return m_nPlayMode; }
+	bool GetPlayShuffle() { return m_bPlayShuffle; }
 	
 	int  GetUsbInsert(){ return m_nUsbInsert; }
 
-	void GetPlayID3Info(char *pTitle, char *pArtist, char *pAlbum, int nLen);
+	void GetPlayID3Info(wchar_t *pTitle, wchar_t *pArtist, wchar_t *pAlbum, int nLen);
 
 private:
 
@@ -165,9 +167,9 @@ private:
 
 	int m_nPlayAuido_Total;
 	int m_nPlayVideo_Total;
-	char m_strPlayTitle[256];    // 当前歌曲名
-	char m_strPlayArtist[256];   // 当前歌手
-	char m_strPlayAlbum[256];    // 当前专辑
+	wchar_t m_strPlayTitle[256];    // 当前歌曲名（UCS-4，宽字符）
+	wchar_t m_strPlayArtist[256];   // 当前歌手
+	wchar_t m_strPlayAlbum[256];    // 当前专辑
 
 	int m_nPlayMode;
 	bool m_bPlayShuffle;

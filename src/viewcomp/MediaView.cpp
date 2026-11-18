@@ -205,8 +205,6 @@ bool MediaView::OnHandle_Mount(T_APP_MSG* msg)
 {
 	bool bRet = false;
 
-	// 只有当前正处在媒体页面时，U盘插拔才自动切换窗口；
-	// 在主界面/其他页面插U盘时只更新状态、后台扫描，不抢屏（否则会弹出一个没有背景图的黑窗口）
 	int nCurWnd = GetCurrWnd();
 	bool bInMediaWnd = (UIID_WNDID_MEDIA_AUDIO_PLAY == nCurWnd) ||
 	                   (UIID_WNDID_MEDIA_AUDIO_LIST == nCurWnd) ||
@@ -492,8 +490,9 @@ void MediaView::OnPasePlayID3(char *pPlayUrl)
 			char szDecoded[2*1024] = {0};
 			size_t nLen = 1024;
 			ConverDecode(song, szDecoded, nLen);
-			strncpy(m_strPlayTitle, szDecoded, sizeof(m_strPlayTitle) - 1);
-			pUIMgr->GetUIAnalysisObj()->SetItemText(UIID_WNDID_MEDIA_AUDIO_PLAY, UUID_PLAY_TITLE, (wchar_t*)m_strPlayTitle);
+			wcsncpy(m_strPlayTitle, (const wchar_t*)szDecoded, 255);
+			m_strPlayTitle[255] = 0;
+			pUIMgr->GetUIAnalysisObj()->SetItemText(UIID_WNDID_MEDIA_AUDIO_PLAY, UUID_PLAY_TITLE, m_strPlayTitle);
 		}
 		else
 		{
@@ -503,7 +502,8 @@ void MediaView::OnPasePlayID3(char *pPlayUrl)
 			char szDecoded[2*1024] = {0};
 			size_t nLen = 1024;
 			ConverDecode(szFileName, szDecoded, nLen);
-			strncpy(m_strPlayTitle, szDecoded, sizeof(m_strPlayTitle) - 1);
+			wcsncpy(m_strPlayTitle, (const wchar_t*)szDecoded, 255);
+			m_strPlayTitle[255] = 0;
 		}
 
 		//获取播放时间
@@ -524,7 +524,8 @@ void MediaView::OnPasePlayID3(char *pPlayUrl)
 
 			//gui update
 			pUIMgr->GetUIAnalysisObj()->SetItemText(UIID_WNDID_MEDIA_AUDIO_PLAY, UUID_PLAY_ARTIST, (wchar_t*)szTemp);
-			strncpy(m_strPlayArtist, szTemp, sizeof(m_strPlayArtist) - 1);
+			wcsncpy(m_strPlayArtist, (const wchar_t*)szTemp, 255);
+			m_strPlayArtist[255] = 0;
 		}
 		else
 		{
@@ -547,7 +548,7 @@ void MediaView::OnPasePlayID3(char *pPlayUrl)
 			}*/
 
 			pUIMgr->GetUIAnalysisObj()->SetItemText(UIID_WNDID_MEDIA_AUDIO_PLAY, UUID_PLAY_ARTIST, L"unknow");
-			strncpy(m_strPlayArtist, "unknown", sizeof(m_strPlayArtist) - 1);
+			wcscpy(m_strPlayArtist, L"unknown");
 		}
 
 		album = m_SPMetaData->metadata("album");
@@ -561,7 +562,8 @@ void MediaView::OnPasePlayID3(char *pPlayUrl)
 
 			//gui update
 			pUIMgr->GetUIAnalysisObj()->SetItemText(UIID_WNDID_MEDIA_AUDIO_PLAY, UUID_PLAY_ALBUM, (wchar_t*)szTemp);
-			strncpy(m_strPlayAlbum, szTemp, sizeof(m_strPlayAlbum) - 1);
+			wcsncpy(m_strPlayAlbum, (const wchar_t*)szTemp, 255);
+			m_strPlayAlbum[255] = 0;
 		}
 		else
 		{
@@ -584,7 +586,7 @@ void MediaView::OnPasePlayID3(char *pPlayUrl)
 			}*/
 
 			pUIMgr->GetUIAnalysisObj()->SetItemText(UIID_WNDID_MEDIA_AUDIO_PLAY, UUID_PLAY_ALBUM, L"unknow");
-			strncpy(m_strPlayAlbum, "unknown", sizeof(m_strPlayAlbum) - 1);
+			wcscpy(m_strPlayAlbum, L"unknown");
 		}
 
 		//专辑封面
@@ -959,6 +961,9 @@ void MediaView::OnViewDetect()
 
 			//进度
 			pUIMgr->GetUIAnalysisObj()->SetProgressItemPos(UIID_WNDID_MEDIA_AUDIO_PLAY,UUID_PLAY_PLAYBAR,nPos);
+
+			//分屏显示时每秒同步刷新分屏媒体卡片（否则只有收到消息才刷新）
+			((IVIView*)GetViewBase())->UpdateSplitMediaView();
 		}
 		else if(PLAY_TYPE_VIDEO == m_nCurPlayType)
 		{
@@ -1459,19 +1464,23 @@ void MediaView::GetPlayInfo(int &nStatus, int &nPos, int &nTotal, char *pszUrl, 
 	}
 }
 
-void MediaView::GetPlayID3Info(char *pTitle, char *pArtist, char *pAlbum, int nLen)
+void MediaView::GetPlayID3Info(wchar_t *pTitle, wchar_t *pArtist, wchar_t *pAlbum, int nLen)
 {
+	// nLen 为宽字符个数；内部按 wchar_t 拷贝，避免 UCS-4 数据被 strncpy 截断成 1 个字
 	if (pTitle)
 	{
-		memset(pTitle, 0, nLen); strncpy(pTitle, m_strPlayTitle, nLen - 1);
+		memset(pTitle, 0, nLen * sizeof(wchar_t));
+		wcsncpy(pTitle, m_strPlayTitle, nLen - 1);
 	}
 	if (pArtist)
 	{
-		memset(pArtist, 0, nLen); strncpy(pArtist, m_strPlayArtist, nLen - 1);
+		memset(pArtist, 0, nLen * sizeof(wchar_t));
+		wcsncpy(pArtist, m_strPlayArtist, nLen - 1);
 	}
 	if (pAlbum)
 	{
-		memset(pAlbum, 0, nLen); strncpy(pAlbum, m_strPlayAlbum, nLen - 1);
+		memset(pAlbum, 0, nLen * sizeof(wchar_t));
+		wcsncpy(pAlbum, m_strPlayAlbum, nLen - 1);
 	}
 }
 
@@ -1762,6 +1771,7 @@ void MediaView::OnUpdateUI_PlayMode(int nPlayMode)
 
 		pUIMgr->GetUIAnalysisObj()->SetItemState(UIID_WNDID_MEDIA_AUDIO_PLAY,UUID_PLAY_SHUFFLE,ITEM_STATE_NORMAL);
 	}
+	((IVIView*)GetViewBase())->UpdateSplitMediaView();
 }
 
 void MediaView::OnUpdateUI_PlayMode_Video(int nPlayMode)
