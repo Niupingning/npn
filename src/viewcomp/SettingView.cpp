@@ -1407,7 +1407,10 @@ void SettingView::onClick_SettingList()
 	{
 		case 0:
 		{
-			//语言
+			//背光
+			pUIMgr->GetUIAnalysisObj()->ShowItem(UIID_WNDID_SETTING, UIID_GROUP_SETTING,false);
+			pUIMgr->GetUIAnalysisObj()->ShowItem(UIID_WNDID_SETTING, UIID_GROUP_SIDE,false);
+			pUIMgr->GetUIAnalysisObj()->ShowItem(UIID_WNDID_SETTING, UIID_GROUP_BKLIGHT,true);
 		}
 		break;
 		case 1:
@@ -1419,24 +1422,34 @@ void SettingView::onClick_SettingList()
 		break;
 		case 2:
 		{
-			//背光
-			pUIMgr->GetUIAnalysisObj()->ShowItem(UIID_WNDID_SETTING, UIID_GROUP_SETTING,false);
-			pUIMgr->GetUIAnalysisObj()->ShowItem(UIID_WNDID_SETTING, UIID_GROUP_SIDE,false);
-			pUIMgr->GetUIAnalysisObj()->ShowItem(UIID_WNDID_SETTING, UIID_GROUP_BKLIGHT,true);
-		}
-		break;
-		case 3:
-		{
 			//复位
 			//pUIMgr->GetUIAnalysisObj()->ShowItem(UIID_WNDID_SETTING, UIID_GROUP_SETTING,false);
 			pUIMgr->GetUIAnalysisObj()->ShowItem(UIID_WNDID_SETTING, UIID_GROUP_RESET,true);
 		}
 		break;
-		case 4:
+		case 3:
 		{
 			//system
 			pUIMgr->GetUIAnalysisObj()->ShowItem(UIID_WNDID_SETTING, UIID_GROUP_SETTING,false);
 			pUIMgr->GetUIAnalysisObj()->ShowItem(UIID_WNDID_SETTING, UIID_GROUP_SYSTEM,true);
+		}
+		break;
+		case 4:
+		{
+			//canbox
+			LOGDBG("UIID_WNDID_SETTING  CANBOX SETTING");
+			pUIMgr->GetUIAnalysisObj()->ShowItem(UIID_WNDID_SETTING, UIID_GROUP_SIDE,false);
+			pUIMgr->GetUIAnalysisObj()->ShowItem(UIID_WNDID_SETTING, UIID_GROUP_SETTING,false);
+			pUIMgr->GetUIAnalysisObj()->ShowItem(UIID_WNDID_SETTING, UIID_GROUP_DATE,false);
+			pUIMgr->GetUIAnalysisObj()->ShowItem(UIID_WNDID_SETTING, UIID_GROUP_BKLIGHT,false);
+			pUIMgr->GetUIAnalysisObj()->ShowItem(UIID_WNDID_SETTING, UIID_GROUP_RESET,false);
+			pUIMgr->GetUIAnalysisObj()->ShowItem(UIID_WNDID_SETTING, UIID_GROUP_SYSTEM,false);
+			pUIMgr->GetUIAnalysisObj()->ShowItem(UIID_WNDID_SETTING, UUID_GROUP_CANBOX_CONNECT,false);
+			pUIMgr->GetUIAnalysisObj()->ShowItem(UIID_WNDID_SETTING, UUID_GROUP_CANBOX_CAR,true);
+
+			//canbox top
+			m_nCanBox_Level = 1;
+			OnInList_CanboxData(m_nCanBox_Level);
 		}
 		break;
 		case 5:
