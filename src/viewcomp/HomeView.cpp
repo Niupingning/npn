@@ -164,13 +164,15 @@ bool HomeView::Update_CP_Connet(T_APP_MSG* msg)
 	if(1 == nCPConnectStatus)
 	{
 		//cp connect icon show
+		pUIMgr->GetUIAnalysisObj()->EnableItem(UIID_WNDID_MAIN,UIID_HOME_CP,true);
 		pUIMgr->GetUIAnalysisObj()->SetItemState(UIID_WNDID_MAIN,UIID_HOME_CP,ITEM_STATE_NORMAL);
 	}
 	else
 	{
 		//cp diconnect icon disable
-		pUIMgr->GetUIAnalysisObj()->SetItemIcon(UIID_WNDID_MAIN,UIID_HOME_CP,16,ITEM_STATE_DISABLE);
+		pUIMgr->GetUIAnalysisObj()->SetItemIcon(UIID_WNDID_MAIN,UIID_HOME_CP,2311,ITEM_STATE_DISABLE);
 		pUIMgr->GetUIAnalysisObj()->SetItemState(UIID_WNDID_MAIN,UIID_HOME_CP,ITEM_STATE_DISABLE);
+		pUIMgr->GetUIAnalysisObj()->EnableItem(UIID_WNDID_MAIN,UIID_HOME_CP,false);
 
 		int nAppStatus = APP_STATUS_NO;
 		mData.GetINTData(INT_APPSTATUS, nAppStatus);
@@ -200,14 +202,16 @@ bool HomeView::Update_AA_Connet(T_APP_MSG* msg)
 
 	if(1 == nAAConnectStatus)
 	{
-		//cp connect icon show
+		//AA connect icon show
+		pUIMgr->GetUIAnalysisObj()->EnableItem(UIID_WNDID_MAIN,UIID_HOME_AA,true);
 		pUIMgr->GetUIAnalysisObj()->SetItemState(UIID_WNDID_MAIN,UIID_HOME_AA,ITEM_STATE_NORMAL);
 	}
 	else
 	{
-		//cp diconnect icon disable
-		pUIMgr->GetUIAnalysisObj()->SetItemIcon(UIID_WNDID_MAIN,UIID_HOME_AA,15,ITEM_STATE_DISABLE);
+		//AA diconnect icon disable
+		pUIMgr->GetUIAnalysisObj()->SetItemIcon(UIID_WNDID_MAIN,UIID_HOME_AA,2312,ITEM_STATE_DISABLE);
 		pUIMgr->GetUIAnalysisObj()->SetItemState(UIID_WNDID_MAIN,UIID_HOME_AA,ITEM_STATE_DISABLE);
+		pUIMgr->GetUIAnalysisObj()->EnableItem(UIID_WNDID_MAIN,UIID_HOME_AA,false);
 
 		int nAppStatus = APP_STATUS_NO;
 		mData.GetINTData(INT_APPSTATUS, nAppStatus);
@@ -245,13 +249,15 @@ bool HomeView::Update_USB_Insert(T_APP_MSG* msg)
 	if(1 == m_nUsb_Insert)
 	{
 		//media icon show
+		pUIMgr->GetUIAnalysisObj()->EnableItem(UIID_WNDID_MAIN,UIID_HOME_MEDIA,true);
 		pUIMgr->GetUIAnalysisObj()->SetItemState(UIID_WNDID_MAIN,UIID_HOME_MEDIA,ITEM_STATE_NORMAL);
 	}
 	else
 	{
 		//media icon disable
-		pUIMgr->GetUIAnalysisObj()->SetItemIcon(UIID_WNDID_MAIN,UIID_HOME_MEDIA,17,ITEM_STATE_DISABLE);
+		pUIMgr->GetUIAnalysisObj()->SetItemIcon(UIID_WNDID_MAIN,UIID_HOME_MEDIA,2313,ITEM_STATE_DISABLE);
 		pUIMgr->GetUIAnalysisObj()->SetItemState(UIID_WNDID_MAIN,UIID_HOME_MEDIA,ITEM_STATE_DISABLE);
+		pUIMgr->GetUIAnalysisObj()->EnableItem(UIID_WNDID_MAIN,UIID_HOME_MEDIA,false);
 	}
 
 	return true;
