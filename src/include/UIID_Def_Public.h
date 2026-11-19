@@ -100,6 +100,7 @@ const int UIID_PUBLIC_SETTINGH_BIN = 1306;  //设置
 const int UIID_PUBLIC_DATE_BIN = 2009;      //日期
 const int UIID_PUBLIC_WEEK_BIN = 2010;      //星期
 const int UIID_PUBLIC_TIME_BIN = 2011;      //时间
+const int UIID_PUBLIC_CLOSE_BIN = 2212;     //顶栏关闭（回主界面）
 
 /** audio popo public id */
 // const int UIID_PUBLIC_AUIDO_POP_BAR= 408;      //音量BAR

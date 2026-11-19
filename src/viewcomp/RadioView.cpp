@@ -285,6 +285,15 @@ void RadioView::OnClickUpdateRadioGroup(CUIWndMng* pUI, long nWndId, long nCtrlI
 			}
 			break;
 		}
+		case UIID_PUBLIC_CLOSE_BIN:      //顶栏 × 关闭(2212) → 回主界面
+		{
+			if(nBtState == 1)
+			{
+				GetViewBase()->ShowWnd(UIID_WNDID_RADIO, false);
+				GetViewBase()->ShowWnd(UIID_WNDID_MAIN, true);
+			}
+			break;
+		}
 		case UIID_RADIO_SOURCE:   ////source
 		{
 			if(nBtState == 1)
