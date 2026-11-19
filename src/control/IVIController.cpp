@@ -129,7 +129,7 @@ bool IVIController::OnInit()
 		}
 
 	}
-
+	// /*
 	bRet = OpenService(CARPLAY_SRV);
 	if (!bRet)
 	{
@@ -166,7 +166,7 @@ bool IVIController::OnInit()
 			LOGDBG("GetServerBinder(\"com.carplay_srv\"); == nullptr !!");
 		}
 	}
-
+	// */
 	bRet = OpenService(ANDROIDAUTO_SRV);
 	if (!bRet)
 	{
@@ -280,7 +280,7 @@ bool IVIController::OnInit()
 			//SendCanBox_CarSelect(0x24);
 		}
 	}
-
+	// PushReOpenService(CARPLAY_SRV);
 	/*bool bRet = OpenService(FY_REVESER_SRV);
 	if (!bRet)
 	{

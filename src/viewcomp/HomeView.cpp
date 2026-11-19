@@ -200,12 +200,12 @@ bool HomeView::Update_AA_Connet(T_APP_MSG* msg)
 
 	if(1 == nAAConnectStatus)
 	{
-		//AA connect icon show
+		//cp connect icon show
 		pUIMgr->GetUIAnalysisObj()->SetItemState(UIID_WNDID_MAIN,UIID_HOME_AA,ITEM_STATE_NORMAL);
 	}
 	else
 	{
-		//AA diconnect icon disable
+		//cp diconnect icon disable
 		pUIMgr->GetUIAnalysisObj()->SetItemIcon(UIID_WNDID_MAIN,UIID_HOME_AA,15,ITEM_STATE_DISABLE);
 		pUIMgr->GetUIAnalysisObj()->SetItemState(UIID_WNDID_MAIN,UIID_HOME_AA,ITEM_STATE_DISABLE);
 
