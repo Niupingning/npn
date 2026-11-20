@@ -11,7 +11,7 @@
 using namespace FY_NAMESPACE;
 
 SplitView::SplitView(ViewBase* p_ViewBase)
-: CompBase(p_ViewBase), m_ViewController(NULL), m_nCurPage(0), m_bUSBMounted(false) {}
+: CompBase(p_ViewBase), m_ViewController(NULL), m_nCurPage(0), m_bUSBMounted(false), m_bPageInited(false) {}
 
 /* 进分屏时调用：选一个默认页并刷新 */
 void SplitView::SplitInitWorkWnd()
@@ -30,9 +30,27 @@ void SplitView::SplitInitWorkWnd()
 		m_bUSBMounted = (szMount[0] != '\0');
 	}
 
-	m_nCurPage = SplitPickDefaultPage();
+	// 首次进入才按当前音源选默认页；窗口重绘/重挂时保留用户滑动到的页
+	if (!m_bPageInited)
+	{
+		m_nCurPage = SplitPickDefaultPage();
+		m_bPageInited = true;
+	}
 	SplitSetPage(m_nCurPage);
 	SplitEnableTextFeature();
+	SplitEnableUsbCtrl();
+}
+
+/* 确保 USB 卡片的循环/随机/文件夹/单曲按钮可点击 */
+void SplitView::SplitEnableUsbCtrl()
+{
+	CUIAnalysis* p = GetViewBase()->GetUIWndMgrWrapper()->GetUIAnalysisObj();
+	if (NULL == p) return;
+
+	p->EnableItem(UIID_WNDID_SPLIT, UIID_SPLIT_MEDIA_LOOP,    TRUE);
+	p->EnableItem(UIID_WNDID_SPLIT, UIID_SPLIT_MEDIA_SHUFFLE, TRUE);
+	p->EnableItem(UIID_WNDID_SPLIT, UIID_SPLIT_MEDIA_FLODER,  TRUE);
+	p->EnableItem(UIID_WNDID_SPLIT, UIID_SPLIT_MEDIA_SINGLE,  TRUE);
 }
 
 /* 文字控件统一设为单行 + 超长滚动，防止换行/竖排 */
@@ -65,6 +83,12 @@ void SplitView::SplitSetPage(int nPage)
 {
 	CUIAnalysis* p = GetViewBase()->GetUIWndMgrWrapper()->GetUIAnalysisObj();
 	if (NULL == p) return;
+
+	if (nPage < SPLIT_PAGE_RADIO || nPage > SPLIT_PAGE_USB)
+	{
+		nPage = SPLIT_PAGE_RADIO;
+	}
+
 	m_nCurPage = nPage;
 	HomeData::GetInstance().SaveINTData(INT_SPLIT_PAGE, nPage);
 
@@ -99,12 +123,20 @@ void SplitView::SplitSetPage(int nPage)
 void SplitView::SplitUpdatePageDot()
 {
 	CUIAnalysis* p = GetViewBase()->GetUIWndMgrWrapper()->GetUIAnalysisObj();
+	if (NULL == p) return;
+
+	// 三个分页点属于整个分屏窗口，任何一页都要显示
+	p->ShowItem(UIID_WNDID_SPLIT, UIID_SPLIT_PAGE_DOT_RADIO, true);
+	p->ShowItem(UIID_WNDID_SPLIT, UIID_SPLIT_PAGE_DOT_BT,    true);
+	p->ShowItem(UIID_WNDID_SPLIT, UIID_SPLIT_PAGE_DOT_USB,   true);
+
+	// 当前页用 NORMAL(亮)，其余页用 SELECTED(暗)，与资源图标亮暗对应
 	p->SetItemState(UIID_WNDID_SPLIT, UIID_SPLIT_PAGE_DOT_RADIO,
-		(SPLIT_PAGE_RADIO == m_nCurPage) ? ITEM_STATE_SELECTED : ITEM_STATE_NORMAL);
+		(SPLIT_PAGE_RADIO == m_nCurPage) ? ITEM_STATE_NORMAL : ITEM_STATE_SELECTED);
 	p->SetItemState(UIID_WNDID_SPLIT, UIID_SPLIT_PAGE_DOT_BT,
-		(SPLIT_PAGE_BT == m_nCurPage) ? ITEM_STATE_SELECTED : ITEM_STATE_NORMAL);
+		(SPLIT_PAGE_BT == m_nCurPage) ? ITEM_STATE_NORMAL : ITEM_STATE_SELECTED);
 	p->SetItemState(UIID_WNDID_SPLIT, UIID_SPLIT_PAGE_DOT_USB,
-		(SPLIT_PAGE_USB == m_nCurPage) ? ITEM_STATE_SELECTED : ITEM_STATE_NORMAL);
+		(SPLIT_PAGE_USB == m_nCurPage) ? ITEM_STATE_NORMAL : ITEM_STATE_SELECTED);
 }
 
 /* No Device 显示规则：Radio 永远有；BT 未连接显示；USB 未挂载显示 */
@@ -155,7 +187,42 @@ void SplitView::SplitOnClick(CUIWndMng* pUI, long nCtrlId, int nBtState)
 	}
 	else
 	{
-		pView->GetMediaView()->MediaOnClick(pUI, UIID_WNDID_MEDIA_AUDIO_PLAY, MapSplitToMedia(nCtrlId), nBtState);
+		MediaView *pMedia = pView->GetMediaView();
+		if (NULL != pMedia)
+		{
+			// 分屏 USB 卡片的播放/暂停/循环方式直接驱动媒体播放
+			switch (nCtrlId)
+			{
+				case UIID_SPLIT_MEDIA_PLAY:
+					pMedia->SetPlayPause(true);
+					SplitUpdateUSB();
+					return;
+				case UIID_SPLIT_MEDIA_PAUSE:
+					pMedia->SetPlayPause(false);
+					SplitUpdateUSB();
+					return;
+				case UIID_SPLIT_MEDIA_LOOP:
+					pMedia->SetPlayMode(PLAY_MODE_NORMAL, false);
+					SplitUpdateUSB();
+					return;
+				case UIID_SPLIT_MEDIA_SHUFFLE:
+					pMedia->SetPlayMode(pMedia->GetPlayMode(), !pMedia->GetPlayShuffle());
+					SplitUpdateUSB();
+					return;
+				case UIID_SPLIT_MEDIA_FLODER:
+					pMedia->SetPlayMode(PLAY_MODE_FOLDER, false);
+					SplitUpdateUSB();
+					return;
+				case UIID_SPLIT_MEDIA_SINGLE:
+					pMedia->SetPlayMode(PLAY_MODE_ONE, false);
+					SplitUpdateUSB();
+					return;
+				default:
+					break;
+			}
+
+			pMedia->MediaOnClick(pUI, UIID_WNDID_MEDIA_AUDIO_PLAY, MapSplitToMedia(nCtrlId), nBtState);
+		}
 	}
 }
 
@@ -366,20 +433,22 @@ void SplitView::SplitUpdateUSB()
 	char szUrl[512] = {0};
 	pMedia->GetPlayInfo(nStatus, nPos, nTotal, szUrl, sizeof(szUrl));
 
-	static int s_nLastStatus = -1;
-	if (s_nLastStatus != nStatus)
+	// 播放/暂停图标：显式设置图标，避免资源默认图标颠倒（参照 BT 卡片）
+	// 211=暂停 212=暂停按下  214=播放 215=播放按下
+	// 播放中 或 播放结束(单曲)：显示暂停键（点击可重播）；其余显示播放键
+	if (Player_Play == nStatus || Player_Finish == nStatus)
 	{
-		s_nLastStatus = nStatus;
-		if (1 == nStatus)
-		{
-			p->ShowItem(UIID_WNDID_SPLIT, UIID_SPLIT_MEDIA_PLAY,  false);
-			p->ShowItem(UIID_WNDID_SPLIT, UIID_SPLIT_MEDIA_PAUSE, true);
-		}
-		else
-		{
-			p->ShowItem(UIID_WNDID_SPLIT, UIID_SPLIT_MEDIA_PLAY,  true);
-			p->ShowItem(UIID_WNDID_SPLIT, UIID_SPLIT_MEDIA_PAUSE, false);
-		}
+		p->SetItemIcon(UIID_WNDID_SPLIT, UIID_SPLIT_MEDIA_PAUSE, 211, ITEM_STATE_NORMAL);
+		p->SetItemIcon(UIID_WNDID_SPLIT, UIID_SPLIT_MEDIA_PAUSE, 212, ITEM_STATE_PUSH);
+		p->ShowItem(UIID_WNDID_SPLIT, UIID_SPLIT_MEDIA_PLAY,  false);
+		p->ShowItem(UIID_WNDID_SPLIT, UIID_SPLIT_MEDIA_PAUSE, true);
+	}
+	else
+	{
+		p->SetItemIcon(UIID_WNDID_SPLIT, UIID_SPLIT_MEDIA_PLAY, 214, ITEM_STATE_NORMAL);
+		p->SetItemIcon(UIID_WNDID_SPLIT, UIID_SPLIT_MEDIA_PLAY, 215, ITEM_STATE_PUSH);
+		p->ShowItem(UIID_WNDID_SPLIT, UIID_SPLIT_MEDIA_PLAY,  true);
+		p->ShowItem(UIID_WNDID_SPLIT, UIID_SPLIT_MEDIA_PAUSE, false);
 	}
 
 	// 时间
@@ -421,22 +490,24 @@ void SplitView::SplitUpdateUSB()
 		p->SetItemText(UIID_WNDID_SPLIT, UIID_SPLIT_MEDIA_ALBUM, szAlbum);
 	}
 
-	// 播放模式 / 随机播放图标（和全屏媒体页保持一致）
-	int nPicMode = (PLAY_MODE_ONE == pMedia->GetPlayMode()) ? 224 : 220;
-	static int s_nLastMode = -1;
-	if (s_nLastMode != nPicMode)
-	{
-		s_nLastMode = nPicMode;
-		p->SetItemIcon(UIID_WNDID_SPLIT, UIID_SPLIT_MEDIA_LOOP, nPicMode, ALL_STATE);
-	}
+	// 播放模式图标：四个按钮全部显式设图标，避免 FLODER/SINGLE 无图标渲染空白
+	int nMode = pMedia->GetPlayShuffle() ? PLAY_MODE_SHUFFLE : pMedia->GetPlayMode();
 
-	int nPicShuffle = pMedia->GetPlayShuffle() ? 234 : 232;
-	static int s_nLastShuffle = -1;
-	if (s_nLastShuffle != nPicShuffle)
-	{
-		s_nLastShuffle = nPicShuffle;
-		p->SetItemIcon(UIID_WNDID_SPLIT, UIID_SPLIT_MEDIA_SHUFFLE, nPicShuffle, ALL_STATE);
-	}
+	p->SetItemIcon(UIID_WNDID_SPLIT, UIID_SPLIT_MEDIA_LOOP,   220, ALL_STATE); //列表循环
+	p->SetItemIcon(UIID_WNDID_SPLIT, UIID_SPLIT_MEDIA_SINGLE, 224, ALL_STATE); //单曲循环
+	p->SetItemIcon(UIID_WNDID_SPLIT, UIID_SPLIT_MEDIA_FLODER, 220, ALL_STATE); //文件夹循环(暂无专用图标)
+	p->SetItemIcon(UIID_WNDID_SPLIT, UIID_SPLIT_MEDIA_SHUFFLE,
+		(PLAY_MODE_SHUFFLE == nMode) ? 234 : 232, ALL_STATE); //随机:开234/关232
+
+	// 四个模式按键的选中态
+	p->SetItemState(UIID_WNDID_SPLIT, UIID_SPLIT_MEDIA_LOOP,
+		(PLAY_MODE_NORMAL == nMode) ? ITEM_STATE_SELECTED : ITEM_STATE_NORMAL);
+	p->SetItemState(UIID_WNDID_SPLIT, UIID_SPLIT_MEDIA_SHUFFLE,
+		(PLAY_MODE_SHUFFLE == nMode) ? ITEM_STATE_SELECTED : ITEM_STATE_NORMAL);
+	p->SetItemState(UIID_WNDID_SPLIT, UIID_SPLIT_MEDIA_FLODER,
+		(PLAY_MODE_FOLDER == nMode) ? ITEM_STATE_SELECTED : ITEM_STATE_NORMAL);
+	p->SetItemState(UIID_WNDID_SPLIT, UIID_SPLIT_MEDIA_SINGLE,
+		(PLAY_MODE_ONE == nMode) ? ITEM_STATE_SELECTED : ITEM_STATE_NORMAL);
 }
 
 /* 分屏媒体卡片跟随播放刷新：MediaView 每秒 tick 时调用 */

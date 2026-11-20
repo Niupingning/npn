@@ -23,6 +23,7 @@ private:
 	void SplitUpdatePageDot();
 	void SplitUpdateNoDevice(int nPage);
 	void SplitEnableTextFeature();
+	void SplitEnableUsbCtrl();
 	int  SplitPickDefaultPage();
 	int  MapSplitToBT(int nCtrlId);
 	int  MapSplitToMedia(int nCtrlId);
@@ -30,5 +31,6 @@ private:
 	IVIController* m_ViewController;
 	int  m_nCurPage;
 	bool m_bUSBMounted;   // U盘是否挂载
+	bool m_bPageInited;   // 是否已选过默认页，避免重绘/重挂窗口时重置用户滑动的页
 };
 #endif

@@ -440,6 +440,7 @@ void EqView::EqOnClick(CUIWndMng* pUI, long nWndId, long nCtrlId, int nBtState)
 					return;
 				}
 
+				/*
 				UIITEMDATA UItem;
 				memset(&UItem,0,sizeof(UItem));
 				pUIMgr->GetUIAnalysisObj()->GetItemData(UIID_WNDID_AUDIOBOOST,UIID_GROUP_EQ_CONT,UItem);
@@ -447,6 +448,7 @@ void EqView::EqOnClick(CUIWndMng* pUI, long nWndId, long nCtrlId, int nBtState)
 
 				int nline = pList->GetTopIndex();
 				LOGDBG("GetTopIndex = %d",nline);
+				*/
 
 				int m_eqmode = m_ConfigHelper->get("eq_mode");
 				vector<int> eq_custom;
@@ -475,7 +477,7 @@ void EqView::EqOnClick(CUIWndMng* pUI, long nWndId, long nCtrlId, int nBtState)
 							{
 								eq_custom[i] = adEqInfo[m_eqmode].eq_gain_array[i];
 							}
-							pList->SetCurSel(5, 0);
+							//pList->SetCurSel(5, 0);
 						}
 						m_AudioControl->setEqValue(5, eq_custom);
 						break;
@@ -494,7 +496,7 @@ void EqView::EqOnClick(CUIWndMng* pUI, long nWndId, long nCtrlId, int nBtState)
 							{
 								eq_custom[i] = adEqInfo[m_eqmode].eq_gain_array[i];
 							}
-							pList->SetCurSel(5, 0);
+							//pList->SetCurSel(5, 0);
 						}
 						m_AudioControl->setEqValue(5, eq_custom);
 						break;
@@ -513,7 +515,7 @@ void EqView::EqOnClick(CUIWndMng* pUI, long nWndId, long nCtrlId, int nBtState)
 							{
 								eq_custom[i] = adEqInfo[m_eqmode].eq_gain_array[i];
 							}
-							pList->SetCurSel(5, 0);
+							//pList->SetCurSel(5, 0);
 						}
 						m_AudioControl->setEqValue(5, eq_custom);
 						break;
@@ -532,7 +534,7 @@ void EqView::EqOnClick(CUIWndMng* pUI, long nWndId, long nCtrlId, int nBtState)
 							{
 								eq_custom[i] = adEqInfo[m_eqmode].eq_gain_array[i];
 							}
-							pList->SetCurSel(5, 0);
+							//pList->SetCurSel(5, 0);
 						}
 						m_AudioControl->setEqValue(5, eq_custom);
 						break;
@@ -551,7 +553,7 @@ void EqView::EqOnClick(CUIWndMng* pUI, long nWndId, long nCtrlId, int nBtState)
 							{
 								eq_custom[i] = adEqInfo[m_eqmode].eq_gain_array[i];
 							}
-							pList->SetCurSel(5, 0);
+							//pList->SetCurSel(5, 0);
 						}
 						m_AudioControl->setEqValue(5, eq_custom);
 						break;
@@ -570,7 +572,7 @@ void EqView::EqOnClick(CUIWndMng* pUI, long nWndId, long nCtrlId, int nBtState)
 							{
 								eq_custom[i] = adEqInfo[m_eqmode].eq_gain_array[i];
 							}
-							pList->SetCurSel(5, 0);
+							//pList->SetCurSel(5, 0);
 						}
 						m_AudioControl->setEqValue(5, eq_custom);
 						break;
@@ -589,7 +591,7 @@ void EqView::EqOnClick(CUIWndMng* pUI, long nWndId, long nCtrlId, int nBtState)
 							{
 								eq_custom[i] = adEqInfo[m_eqmode].eq_gain_array[i];
 							}
-							pList->SetCurSel(5, 0);
+							//pList->SetCurSel(5, 0);
 						}
 						m_AudioControl->setEqValue(5, eq_custom);
 						break;
@@ -608,7 +610,7 @@ void EqView::EqOnClick(CUIWndMng* pUI, long nWndId, long nCtrlId, int nBtState)
 							{
 								eq_custom[i] = adEqInfo[m_eqmode].eq_gain_array[i];
 							}
-							pList->SetCurSel(5, 0);
+							//pList->SetCurSel(5, 0);
 						}
 						m_AudioControl->setEqValue(5, eq_custom);
 						break;
@@ -627,7 +629,7 @@ void EqView::EqOnClick(CUIWndMng* pUI, long nWndId, long nCtrlId, int nBtState)
 							{
 								eq_custom[i] = adEqInfo[m_eqmode].eq_gain_array[i];
 							}
-							pList->SetCurSel(5, 0);
+							//pList->SetCurSel(5, 0);
 						}
 						m_AudioControl->setEqValue(5, eq_custom);
 						break;
@@ -646,7 +648,7 @@ void EqView::EqOnClick(CUIWndMng* pUI, long nWndId, long nCtrlId, int nBtState)
 							{
 								eq_custom[i] = adEqInfo[m_eqmode].eq_gain_array[i];
 							}
-							pList->SetCurSel(5, 0);
+							//pList->SetCurSel(5, 0);
 						}
 						m_AudioControl->setEqValue(5, eq_custom);
 						break;
@@ -665,7 +667,7 @@ void EqView::EqOnClick(CUIWndMng* pUI, long nWndId, long nCtrlId, int nBtState)
 							{
 								eq_custom[i] = adEqInfo[m_eqmode].eq_gain_array[i];
 							}
-							pList->SetCurSel(5, 0);
+							//pList->SetCurSel(5, 0);
 						}
 						m_AudioControl->setEqValue(5, eq_custom);
 						break;
@@ -684,7 +686,7 @@ void EqView::EqOnClick(CUIWndMng* pUI, long nWndId, long nCtrlId, int nBtState)
 							{
 								eq_custom[i] = adEqInfo[m_eqmode].eq_gain_array[i];
 							}
-							pList->SetCurSel(5, 0);
+							//pList->SetCurSel(5, 0);
 						}
 						m_AudioControl->setEqValue(5, eq_custom);
 						break;
@@ -703,36 +705,39 @@ void EqView::EqOnClick(CUIWndMng* pUI, long nWndId, long nCtrlId, int nBtState)
 							{
 								eq_custom[i] = adEqInfo[m_eqmode].eq_gain_array[i];
 							}
-							pList->SetCurSel(5, 0);
+							//pList->SetCurSel(5, 0);
 						}
 						m_AudioControl->setEqValue(5, eq_custom);
 						break;
 					}
 					case UIID_GROUP_EQ_LEFT:
 					{
-						if(nline == 3)
+						/*if(nline == 3)
 						{
-							pList->SetTopIndex(0);
+							//pList->SetTopIndex(0);
 							pUIMgr->GetUIAnalysisObj()->SetItemState(UIID_WNDID_AUDIOBOOST, UIID_GROUP_EQ_LEFT, ITEM_STATE_DISABLE);
 							pUIMgr->GetUIAnalysisObj()->SetItemState(UIID_WNDID_AUDIOBOOST, UIID_GROUP_EQ_RIGHT, ITEM_STATE_NORMAL);
 						}
 						else
 						{
 
-						}
+						}*/
+						break;
 					}	
 					case UIID_GROUP_EQ_RIGHT:
 					{
+						/*
 						if(nline == 0 || nline == 1 || nline == 2)
 						{
-							pList->SetTopIndex(3);
+							//pList->SetTopIndex(3);
 							pUIMgr->GetUIAnalysisObj()->SetItemState(UIID_WNDID_AUDIOBOOST, UIID_GROUP_EQ_RIGHT, ITEM_STATE_DISABLE);
 							pUIMgr->GetUIAnalysisObj()->SetItemState(UIID_WNDID_AUDIOBOOST, UIID_GROUP_EQ_LEFT, ITEM_STATE_NORMAL);
 						}
 						else 
 						{
 
-						}
+						}*/
+						break;
 					}																																																										
 					default:
 					{
@@ -742,8 +747,94 @@ void EqView::EqOnClick(CUIWndMng* pUI, long nWndId, long nCtrlId, int nBtState)
 				
 				break;		
 			}
+			case UIID_GROUP_EQ_SUPERBASS:
+			{
+				vector<int> gain;
+				gain.reserve(13);
+
+				int tmp[] = {8, 8, 6, 6, 2, 0, 0, 0, 0, 2, 2, 4, 2};
+				for(int i = 0; i < 13; i++)
+				{
+					GetViewBase()->GetUIWndMgrWrapper()->GetUIAnalysisObj()->SetProgressItemValues(UIID_WNDID_AUDIOBOOST,1803+i,12,(tmp[i]+12)/2);
+				}
+				m_AudioControl->setEqValue(0, gain);
+				break;
+			}
+			case UIID_GROUP_EQ_POWERFUL:
+			{
+				vector<int> gain;
+				gain.reserve(13);
+
+				int tmp[] = {2, 6, 4, 2, 0, -2, 0, 2, 2, 2, 4, 4, 6};
+				for(int i = 0; i < 13; i++)
+				{
+					GetViewBase()->GetUIWndMgrWrapper()->GetUIAnalysisObj()->SetProgressItemValues(UIID_WNDID_AUDIOBOOST,1803+i,12,(tmp[i]+12)/2);
+				}
+				m_AudioControl->setEqValue(1, gain);
+				break;
+			}
+			case UIID_GROUP_EQ_NATURAL:
+			{
+				vector<int> gain;
+				gain.reserve(13);
+
+				int tmp[] = {-6, 2, 2, 2, 0, 0, 2, 2, -2, -2, 2, 2, 4};
+				for(int i = 0; i < 13; i++)
+				{
+					GetViewBase()->GetUIWndMgrWrapper()->GetUIAnalysisObj()->SetProgressItemValues(UIID_WNDID_AUDIOBOOST,1803+i,12,(tmp[i]+12)/2);
+				}				
+				m_AudioControl->setEqValue(2, gain);
+				break;
+			}
+			case UIID_GROUP_EQ_VOCAL:
+			{
+				vector<int> gain;
+				gain.reserve(13);
+
+				int tmp[] = {-6, -2, 0, 4, 6, 6, 2, 0, 2, 4, 4, 2, 0};
+				for(int i = 0; i < 13; i++)
+				{
+					GetViewBase()->GetUIWndMgrWrapper()->GetUIAnalysisObj()->SetProgressItemValues(UIID_WNDID_AUDIOBOOST,1803+i,12,(tmp[i]+12)/2);
+				}				
+				m_AudioControl->setEqValue(3, gain);
+				break;
+			}
+			case UIID_GROUP_EQ_FLAT:
+			{
+				vector<int> gain;
+				gain.reserve(13);
+
+				int tmp[] = {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0};
+				for(int i = 0; i < 13; i++)
+				{
+					GetViewBase()->GetUIWndMgrWrapper()->GetUIAnalysisObj()->SetProgressItemValues(UIID_WNDID_AUDIOBOOST,1803+i,12,(tmp[i]+12)/2);
+				}				
+				m_AudioControl->setEqValue(4, gain);
+				break;
+			}
+			case UIID_GROUP_EQ_CUSTOM1:
+			case UIID_GROUP_EQ_CUSTOM2:
+			{
+				vector<int> gain;
+				gain.reserve(13);
+
+				char config_item_name[32] = {0};
+			
+				for(int i = 0; i < 13; i++)
+				{
+					sprintf(config_item_name, "custom1_index%d", i);
+					gain.push_back(m_ConfigHelper->get(config_item_name));
+				}
+				for(int i = 0; i < 13; i++)
+				{
+					GetViewBase()->GetUIWndMgrWrapper()->GetUIAnalysisObj()->SetProgressItemValues(UIID_WNDID_AUDIOBOOST,1803+i,12,(gain[i]+12)/2);
+				}				
+				m_AudioControl->setEqValue(5, gain);
+				break;
+			}
 			case UIID_GROUP_EQ_CONT:
 			{
+				/*
 				CUIWndMgrWrapper *pUIMgr = NULL; 
 				pUIMgr = GetViewBase()->GetUIWndMgrWrapper();
 				if (NULL == pUIMgr)
@@ -826,6 +917,7 @@ void EqView::EqOnClick(CUIWndMng* pUI, long nWndId, long nCtrlId, int nBtState)
 					m_AudioControl->setEqValue(5, gain);
 				}
 				else{}
+				*/
 				break;
 			}
 			case UIID_GROUP_TIME_TYPE_L:
@@ -2529,10 +2621,10 @@ void EqView::onClick_SettingList()
 	pUIMgr->GetUIAnalysisObj()->GetItemData(UIID_WNDID_AUDIOBOOST,UIID_AUDIO_BOOST_LIST,UItem);
 	CUI_BtList *pList = (CUI_BtList*) UItem.m_pCtrl;
 
-	UIITEMDATA data;
+	/*UIITEMDATA data;
 	memset(&data,0,sizeof(data));
 	pUIMgr->GetUIAnalysisObj()->GetItemData(UIID_WNDID_AUDIOBOOST,UIID_GROUP_EQ_CONT,data);
-	CUI_BtList *mList = (CUI_BtList*) data.m_pCtrl;
+	CUI_BtList *mList = (CUI_BtList*) data.m_pCtrl;*/
 
 	if(NULL == pList)
 	{
@@ -2827,7 +2919,7 @@ void EqView::onClick_SettingList()
 			pUIMgr->GetUIAnalysisObj()->ShowItem(UIID_WNDID_AUDIOBOOST, UIID_GROUP_EQ,true);
 			pUIMgr->GetUIAnalysisObj()->SetItemText(UIID_WNDID_AUDIOBOOST, UIID_AUDIO_BOOST_RETURN, 605);
 			int line = m_ConfigHelper->get("eq_mode");
-			mList->SetCurSel(line, 0);
+			//mList->SetCurSel(line, 0);
 
 			// if(line == 0)
 			// {

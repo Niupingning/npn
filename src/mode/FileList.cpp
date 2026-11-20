@@ -10,6 +10,71 @@
 
 #include "MediaData.h"
 
+/* 判断两个文件是否在同一个目录下 */
+static bool IsSameDirectory(const char *pFileA, const char *pFileB)
+{
+	if (NULL == pFileA || NULL == pFileB)
+	{
+		return false;
+	}
+
+	const char *pA = strrchr(pFileA, '/');
+	const char *pB = strrchr(pFileB, '/');
+	if (NULL == pA || NULL == pB)
+	{
+		return false;
+	}
+
+	size_t nLenA = (size_t)(pA - pFileA);
+	size_t nLenB = (size_t)(pB - pFileB);
+	if (nLenA != nLenB)
+	{
+		return false;
+	}
+
+	return (0 == strncmp(pFileA, pFileB, nLenA));
+}
+
+/* 文件夹循环：在当前文件所在目录内按 nDir(1:下一首 -1:上一首) 查找，找不到则回到当前文件 */
+static int FindFolderPlay(const std::vector<Element> &lst, const char *pCurFile, int nDir)
+{
+	int nSum = (int)lst.size();
+	if (nSum <= 0)
+	{
+		return -1;
+	}
+
+	int nCur = -1;
+	for (int i = 0; i < nSum; i++)
+	{
+		if (0 == strcmp(pCurFile, lst[i].m_sFilePath))
+		{
+			nCur = i;
+			break;
+		}
+	}
+	if (nCur < 0)
+	{
+		return -1;
+	}
+
+	for (int nOff = 1; nOff < nSum; nOff++)
+	{
+		int nIdx = (nCur + nDir * nOff) % nSum;
+		if (nIdx < 0)
+		{
+			nIdx += nSum;
+		}
+		if (IsSameDirectory(pCurFile, lst[nIdx].m_sFilePath))
+		{
+			return nIdx;
+		}
+	}
+
+	// 文件夹内只有当前文件：重复播放当前文件
+	return nCur;
+}
+
 
 Element::Element(void)
 {
@@ -298,6 +363,10 @@ int CFileList::GetPlayNext(const char *pPlayFile,int nPlayType,int nPlayMode,Ele
 	if(PLAY_TYPE_AUDIO == nPlayType)
 	{
 		nSum = GetAudioFileNum();
+		if(nSum <= 0)
+		{
+			return -1;
+		}
 		if(PLAY_MODE_NORMAL == nPlayMode)
 		{
 			for(int i = 0;i<nSum;i++)
@@ -322,6 +391,15 @@ int CFileList::GetPlayNext(const char *pPlayFile,int nPlayType,int nPlayMode,Ele
 
 			nRet = nNextPlay;
 		}
+		else if(PLAY_MODE_FOLDER == nPlayMode)
+		{
+			nNextPlay = FindFolderPlay(m_AudioFileList, pPlayFile, 1);
+			if(nNextPlay >= 0)
+			{
+				Ele = m_AudioFileList[nNextPlay];
+				nRet = nNextPlay;
+			}
+		}
 		else if(PLAY_MODE_ONE == nPlayMode)
 		{
 			for(int i = 0;i<nSum;i++)
@@ -339,6 +417,10 @@ int CFileList::GetPlayNext(const char *pPlayFile,int nPlayType,int nPlayMode,Ele
 	else if(PLAY_TYPE_VIDEO == nPlayType)
 	{
 		nSum = GetVideoFileNum();
+		if(nSum <= 0)
+		{
+			return -1;
+		}
 		if(PLAY_MODE_NORMAL == nPlayMode)
 		{
 			for(int i = 0;i<nSum;i++)
@@ -363,6 +445,15 @@ int CFileList::GetPlayNext(const char *pPlayFile,int nPlayType,int nPlayMode,Ele
 			Ele = m_VideoFileList[nNextPlay];
 
 			nRet = nNextPlay;
+		}
+		else if(PLAY_MODE_FOLDER == nPlayMode)
+		{
+			nNextPlay = FindFolderPlay(m_VideoFileList, pPlayFile, 1);
+			if(nNextPlay >= 0)
+			{
+				Ele = m_VideoFileList[nNextPlay];
+				nRet = nNextPlay;
+			}
 		}
 		else if(PLAY_MODE_ONE == nPlayMode)
 		{
@@ -391,6 +482,10 @@ int CFileList::GetPlayPrev(const char *pPlayFile,int nPlayType,int nPlayMode,Ele
 	if(PLAY_TYPE_AUDIO == nPlayType)
 	{
 		nSum = GetAudioFileNum();
+		if(nSum <= 0)
+		{
+			return -1;
+		}
 		if(PLAY_MODE_NORMAL == nPlayMode)
 		{
 			for(int i = 0;i<nSum;i++)
@@ -415,6 +510,15 @@ int CFileList::GetPlayPrev(const char *pPlayFile,int nPlayType,int nPlayMode,Ele
 
 			nRet = nPrevPlay;
 		}
+		else if(PLAY_MODE_FOLDER == nPlayMode)
+		{
+			nPrevPlay = FindFolderPlay(m_AudioFileList, pPlayFile, -1);
+			if(nPrevPlay >= 0)
+			{
+				Ele = m_AudioFileList[nPrevPlay];
+				nRet = nPrevPlay;
+			}
+		}
 		else if(PLAY_MODE_ONE == nPlayMode)
 		{
 			for(int i = 0;i<nSum;i++)
@@ -432,6 +536,10 @@ int CFileList::GetPlayPrev(const char *pPlayFile,int nPlayType,int nPlayMode,Ele
 	else if(PLAY_TYPE_VIDEO == nPlayType)
 	{
 		nSum = GetVideoFileNum();
+		if(nSum <= 0)
+		{
+			return -1;
+		}
 		if(PLAY_MODE_NORMAL == nPlayMode)
 		{
 			for(int i = 0;i<nSum;i++)
@@ -456,6 +564,15 @@ int CFileList::GetPlayPrev(const char *pPlayFile,int nPlayType,int nPlayMode,Ele
 			Ele = m_VideoFileList[nPrevPlay];
 
 			nRet = nPrevPlay;
+		}
+		else if(PLAY_MODE_FOLDER == nPlayMode)
+		{
+			nPrevPlay = FindFolderPlay(m_VideoFileList, pPlayFile, -1);
+			if(nPrevPlay >= 0)
+			{
+				Ele = m_VideoFileList[nPrevPlay];
+				nRet = nPrevPlay;
+			}
 		}
 		else if(PLAY_MODE_ONE == nPlayMode)
 		{

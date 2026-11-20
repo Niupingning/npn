@@ -52,9 +52,10 @@ enum
 
 enum
 {
-    PLAY_MODE_NORMAL  = 0,
-    PLAY_MODE_ONE     = 1,
-    PLAY_MODE_SHUFFLE = 3,
+    PLAY_MODE_NORMAL  = 0,   //列表循环
+    PLAY_MODE_ONE     = 1,   //单曲循环
+    PLAY_MODE_FOLDER  = 2,   //文件夹循环
+    PLAY_MODE_SHUFFLE = 3,   //随机播放
 };
 
 enum

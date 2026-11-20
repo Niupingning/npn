@@ -59,6 +59,9 @@ MediaView::MediaView(ViewBase* p_ViewBase)
 	m_nPlayMode = PLAY_MODE_NORMAL;
 	m_bPlayShuffle = false;
 
+	m_bAudioEndHandled = false;
+	m_bVideoEndHandled = false;
+
 	m_nPlayMode_Video = PLAY_MODE_NORMAL;
 
 	m_bAudioList_Update = false;
@@ -275,9 +278,53 @@ bool MediaView::OnPlayUrl_Time(T_APP_MSG* msg)
 
 	if(PLAY_TYPE_AUDIO == msg->Param2)
 	{
-		m_nPlayAudio_pos = msg->Param0;
+		//兼容服务端以毫秒上报：按总时长自动换算为秒
+		int nTimeScale = 1;
+		if(msg->Param1 > 0)
+		{
+			if(m_nPlayAuido_Total > 0)
+			{
+				if(msg->Param1 > m_nPlayAuido_Total * 10)
+				{
+					nTimeScale = 1000;
+				}
+			}
+			else
+			{
+				nTimeScale = (msg->Param1 > 24*60*60) ? 1000 : 1;
+			}
+		}
 
-		//m_nPlayAuido_Total = msg->Param1;
+		//以服务端上报的播放位置为准
+		if(msg->Param0 >= 0)
+		{
+			m_nPlayAudio_pos = msg->Param0 / nTimeScale;
+		}
+
+		//ID3解析不到总时长时，用播放服务上报的总时长兜底
+		if(m_nPlayAuido_Total <= 0 && msg->Param1 > 0)
+		{
+			m_nPlayAuido_Total = msg->Param1 / nTimeScale;
+		}
+
+		//单位仍不一致时按毫秒兜底
+		if(m_nPlayAuido_Total > 0 && m_nPlayAudio_pos > m_nPlayAuido_Total * 10)
+		{
+			m_nPlayAudio_pos /= 1000;
+		}
+
+		//播放时间不能超过总时长
+		if(m_nPlayAuido_Total > 0 && m_nPlayAudio_pos > m_nPlayAuido_Total)
+		{
+			m_nPlayAudio_pos = m_nPlayAuido_Total;
+		}
+
+		//位置回到开头（重新播放/循环）后，允许再次检测播放结束
+		//留 2 秒余量，避免末尾位置小幅抖动导致重复切歌
+		if(m_nPlayAuido_Total <= 0 || 0 == m_nPlayAudio_pos || (m_nPlayAudio_pos + 2) < m_nPlayAuido_Total)
+		{
+			m_bAudioEndHandled = false;
+		}
 
         //更新总播放时间
 		int nMin = m_nPlayAuido_Total / 60;
@@ -286,10 +333,54 @@ bool MediaView::OnPlayUrl_Time(T_APP_MSG* msg)
 		swprintf(szTip,MAX_FILE_LEN,L"%02d:%02d",nMin,sec);
 
 		pUIMgr->GetUIAnalysisObj()->SetItemText(UIID_WNDID_MEDIA_AUDIO_PLAY, UUID_PLAY_TOTALTIME, szTip);
+
+		if(Player_Play == m_nCurPlayStatus)
+		{
+			CheckAudioEnd();
+		}
 	}
 	else if(PLAY_TYPE_VIDEO == msg->Param2)
 	{
-		m_nPlayVideo_pos = msg->Param0;
+		int nTimeScale = 1;
+		if(msg->Param1 > 0)
+		{
+			if(m_nPlayVideo_Total > 0)
+			{
+				if(msg->Param1 > m_nPlayVideo_Total * 10)
+				{
+					nTimeScale = 1000;
+				}
+			}
+			else
+			{
+				nTimeScale = (msg->Param1 > 24*60*60) ? 1000 : 1;
+			}
+		}
+
+		if(msg->Param0 >= 0)
+		{
+			m_nPlayVideo_pos = msg->Param0 / nTimeScale;
+		}
+
+		if(m_nPlayVideo_Total <= 0 && msg->Param1 > 0)
+		{
+			m_nPlayVideo_Total = msg->Param1 / nTimeScale;
+		}
+
+		if(m_nPlayVideo_Total > 0 && m_nPlayVideo_pos > m_nPlayVideo_Total * 10)
+		{
+			m_nPlayVideo_pos /= 1000;
+		}
+
+		if(m_nPlayVideo_Total > 0 && m_nPlayVideo_pos > m_nPlayVideo_Total)
+		{
+			m_nPlayVideo_pos = m_nPlayVideo_Total;
+		}
+
+		if(m_nPlayVideo_Total <= 0 || 0 == m_nPlayVideo_pos || (m_nPlayVideo_pos + 2) < m_nPlayVideo_Total)
+		{
+			m_bVideoEndHandled = false;
+		}
 		
         //更新总播放时间
 		int nMin = m_nPlayVideo_Total / 60;
@@ -297,7 +388,12 @@ bool MediaView::OnPlayUrl_Time(T_APP_MSG* msg)
 		wchar_t szTip[MAX_FILE_LEN] = {0};
 		swprintf(szTip,MAX_FILE_LEN,L"%02d:%02d",nMin,sec);
 
-		pUIMgr->GetUIAnalysisObj()->SetItemText(UIID_WNDID_MEDIA_VIDEO_PLAY, UUID_VIDEO_PLAY_TOTALTIME, szTip);		
+		pUIMgr->GetUIAnalysisObj()->SetItemText(UIID_WNDID_MEDIA_VIDEO_PLAY, UUID_VIDEO_PLAY_TOTALTIME, szTip);
+
+		if(Player_Play == m_nCurPlayStatus)
+		{
+			CheckVideoEnd();
+		}
 	}
 
 	return true;
@@ -317,6 +413,10 @@ bool MediaView::OnPlayUrl_Status(T_APP_MSG* msg)
 		if(0 != strcmp(m_PrePlayAudioUrl,tmpUrl))
 		{
 			strcpy(m_PrePlayAudioUrl,tmpUrl);
+
+			//切歌后重置时间与结束标记
+			m_nPlayAudio_pos = 0;
+			m_bAudioEndHandled = false;
 
 			//解析ID3
 			OnPasePlayID3(tmpUrl);
@@ -344,7 +444,22 @@ bool MediaView::OnPlayUrl_Status(T_APP_MSG* msg)
 			case Player_Finish:
 			{
 				m_nCurPlayStatus = Player_Finish;
-				OnPlay_Next();
+				OnUpdate_PlayPause(m_nCurPlayStatus);
+
+				//只有一首歌且非单曲循环时：停止，不自动续播
+				if(m_FileList.GetAudioFileNum() <= 1 && PLAY_MODE_ONE != m_nPlayMode)
+				{
+					m_bAudioEndHandled = true;
+					((IVIView*)GetViewBase())->UpdateSplitMediaView();
+					break;
+				}
+
+				//按当前循环方式切歌（若定时器已处理过结束则忽略，避免重复切歌）
+				if(!m_bAudioEndHandled)
+				{
+					m_bAudioEndHandled = true;
+					OnPlay_Next();
+				}
 			}
 			break;
 			case Player_Error:
@@ -372,6 +487,10 @@ bool MediaView::OnPlayUrl_Status(T_APP_MSG* msg)
 		{
 			strcpy(m_PrePlayVideoUrl,tmpUrl);
 
+			//切视频后重置时间与结束标记
+			m_nPlayVideo_pos = 0;
+			m_bVideoEndHandled = false;
+
 			//获取总时间
 			m_nPlayVideo_Total = OnPase_TotalTime(tmpUrl);
 			//update UI
@@ -396,7 +515,12 @@ bool MediaView::OnPlayUrl_Status(T_APP_MSG* msg)
 			case Player_Finish:
 			{
 				m_nCurPlayStatus = Player_Finish;
-				OnPlay_Next_Video();
+
+				if(!m_bVideoEndHandled)
+				{
+					m_bVideoEndHandled = true;
+					OnPlay_Next_Video();
+				}
 			}
 			break;
 			case Player_Error:
@@ -945,14 +1069,22 @@ void MediaView::OnViewDetect()
 
 		if(PLAY_TYPE_AUDIO == m_nCurPlayType)
 		{
-			m_nPlayAudio_pos++;
+			//有总时长时不允许超过总时长，结束后按循环方式切歌
+			if(m_nPlayAuido_Total <= 0 || m_nPlayAudio_pos < m_nPlayAuido_Total)
+			{
+				m_nPlayAudio_pos++;
+			}
 
 			int nMin = m_nPlayAudio_pos / 60;
 			int sec = m_nPlayAudio_pos % 60;
 			wchar_t szTip[MAX_FILE_LEN] = {0};
 			swprintf(szTip,MAX_FILE_LEN,L"%02d:%02d",nMin,sec);
 
-			int nPos = (m_nPlayAudio_pos * 100) / m_nPlayAuido_Total;
+			int nPos = (m_nPlayAuido_Total > 0) ? ((m_nPlayAudio_pos * 100) / m_nPlayAuido_Total) : 0;
+			if(nPos > 100)
+			{
+				nPos = 100;
+			}
 
 			//LOGDBG("&&&--nMin:%d,sec:%d,nPos:%d",nMin,sec,nPos);
             
@@ -962,19 +1094,29 @@ void MediaView::OnViewDetect()
 			//进度
 			pUIMgr->GetUIAnalysisObj()->SetProgressItemPos(UIID_WNDID_MEDIA_AUDIO_PLAY,UUID_PLAY_PLAYBAR,nPos);
 
+			//播放结束检测：按当前循环方式切歌
+			CheckAudioEnd();
+
 			//分屏显示时每秒同步刷新分屏媒体卡片（否则只有收到消息才刷新）
 			((IVIView*)GetViewBase())->UpdateSplitMediaView();
 		}
 		else if(PLAY_TYPE_VIDEO == m_nCurPlayType)
 		{
-			m_nPlayVideo_pos++;
+			if(m_nPlayVideo_Total <= 0 || m_nPlayVideo_pos < m_nPlayVideo_Total)
+			{
+				m_nPlayVideo_pos++;
+			}
 
 			int nMin = m_nPlayVideo_pos / 60;
 			int sec = m_nPlayVideo_pos % 60;
 			wchar_t szTip[MAX_FILE_LEN] = {0};
 			swprintf(szTip,MAX_FILE_LEN,L"%02d:%02d",nMin,sec);
 
-			int nPos = (m_nPlayVideo_pos * 100) / m_nPlayVideo_Total;
+			int nPos = (m_nPlayVideo_Total > 0) ? ((m_nPlayVideo_pos * 100) / m_nPlayVideo_Total) : 0;
+			if(nPos > 100)
+			{
+				nPos = 100;
+			}
 
 			//LOGDBG("&&&--nMin:%d,sec:%d,nPos:%d",nMin,sec,nPos);
             
@@ -982,9 +1124,195 @@ void MediaView::OnViewDetect()
 			pUIMgr->GetUIAnalysisObj()->SetItemText(UIID_WNDID_MEDIA_VIDEO_PLAY, UUID_VIDEO_PLAY_TIME, szTip);
 
 			//进度
-			pUIMgr->GetUIAnalysisObj()->SetProgressItemPos(UIID_WNDID_MEDIA_VIDEO_PLAY,UUID_VIDEO_PLAY_BAR,nPos);			
+			pUIMgr->GetUIAnalysisObj()->SetProgressItemPos(UIID_WNDID_MEDIA_VIDEO_PLAY,UUID_VIDEO_PLAY_BAR,nPos);
+
+			CheckVideoEnd();
 		}
 	}
+}
+
+void MediaView::CheckAudioEnd()
+{
+	if(PLAY_TYPE_AUDIO != m_nCurPlayType)
+	{
+		return;
+	}
+	if(m_nPlayAuido_Total <= 0)
+	{
+		//总时长未知时不做结束判定
+		return;
+	}
+	if(m_nPlayAudio_pos < m_nPlayAuido_Total)
+	{
+		return;
+	}
+
+	m_nPlayAudio_pos = m_nPlayAuido_Total;
+
+	//同一首歌的结束只处理一次，避免与 Player_Finish 重复切歌
+	if(m_bAudioEndHandled)
+	{
+		return;
+	}
+	m_bAudioEndHandled = true;
+
+	//只有一首歌且非单曲循环时：停止，不自动续播（显示暂停键，点击可重播）
+	if(m_FileList.GetAudioFileNum() <= 1 && PLAY_MODE_ONE != m_nPlayMode)
+	{
+		m_nCurPlayStatus = Player_Finish;
+		OnUpdate_PlayPause(m_nCurPlayStatus);
+		((IVIView*)GetViewBase())->UpdateSplitMediaView();
+		return;
+	}
+
+	LOGDBG("&&&---audio finished, switch by play mode:%d,shuffle:%d",m_nPlayMode,m_bPlayShuffle);
+	OnPlay_Next();
+}
+
+void MediaView::CheckVideoEnd()
+{
+	if(PLAY_TYPE_VIDEO != m_nCurPlayType)
+	{
+		return;
+	}
+	if(m_nPlayVideo_Total <= 0)
+	{
+		return;
+	}
+	if(m_nPlayVideo_pos < m_nPlayVideo_Total)
+	{
+		return;
+	}
+
+	m_nPlayVideo_pos = m_nPlayVideo_Total;
+
+	if(m_bVideoEndHandled)
+	{
+		return;
+	}
+	m_bVideoEndHandled = true;
+
+	LOGDBG("&&&---video finished, switch by play mode:%d",m_nPlayMode_Video);
+	OnPlay_Next_Video();
+}
+
+/* 显式播放/暂停：点击分屏或全屏的播放/暂停键都走这里 */
+void MediaView::SetPlayPause(bool bPlay)
+{
+	if(NULL == m_ViewController)
+	{
+		return;
+	}
+
+	if(bPlay)
+	{
+		if(Player_Play == m_nCurPlayStatus)
+		{
+			return;
+		}
+
+		if(Player_Pause == m_nCurPlayStatus)
+		{
+			T_PLAYMEDIA_CMD tPlayCmd;
+			memset(&tPlayCmd,0,sizeof(T_PLAYMEDIA_CMD));
+
+			tPlayCmd.nPlayCmd = PLAY_CMD_PLAY;
+			tPlayCmd.nParam = 0;
+
+			m_ViewController->SetMediaPlay_Cmd(tPlayCmd);
+		}
+		else
+		{
+			//结束/停止/出错状态：重新播放当前文件，保证“播放”键可用
+			char szUrl[MAX_FILE_LEN] = {0};
+			MediaData::GetInstance().GetCurPlayUrl(szUrl);
+
+			if(strlen(szUrl) > 0)
+			{
+				m_nPlayAudio_pos = 0;
+				m_bAudioEndHandled = false;
+
+				OnReset_Play(PLAY_TYPE_AUDIO);
+			}
+			else
+			{
+				//还没有当前歌曲时，直接播放列表第一首；否则下发播放命令
+				if(m_FileList.GetAudioFileNum() > 0)
+				{
+					m_nPlayAudio_pos = 0;
+					m_bAudioEndHandled = false;
+
+					OnPlay_Audio();
+				}
+				else
+				{
+					T_PLAYMEDIA_CMD tPlayCmd;
+					memset(&tPlayCmd,0,sizeof(T_PLAYMEDIA_CMD));
+
+					tPlayCmd.nPlayCmd = PLAY_CMD_PLAY;
+					tPlayCmd.nParam = 0;
+
+					m_ViewController->SetMediaPlay_Cmd(tPlayCmd);
+				}
+			}
+		}
+
+		m_nCurPlayStatus = Player_Play;
+		OnUpdate_PlayPause(m_nCurPlayStatus);
+	}
+	else
+	{
+		//播放结束后点击暂停键 = 重新播放当前歌曲
+		if(Player_Finish == m_nCurPlayStatus)
+		{
+			m_nPlayAudio_pos = 0;
+			m_bAudioEndHandled = false;
+			OnReset_Play(PLAY_TYPE_AUDIO);
+
+			m_nCurPlayStatus = Player_Play;
+			OnUpdate_PlayPause(m_nCurPlayStatus);
+			((IVIView*)GetViewBase())->UpdateSplitMediaView();
+			return;
+		}
+
+		if(Player_Play != m_nCurPlayStatus)
+		{
+			return;
+		}
+
+		T_PLAYMEDIA_CMD tPlayCmd;
+		memset(&tPlayCmd,0,sizeof(T_PLAYMEDIA_CMD));
+
+		tPlayCmd.nPlayCmd = PLAY_CMD_PAUSE;
+		tPlayCmd.nParam = 0;
+
+		m_ViewController->SetMediaPlay_Cmd(tPlayCmd);
+
+		m_nCurPlayStatus = Player_Pause;
+		OnUpdate_PlayPause(m_nCurPlayStatus);
+	}
+
+	//同步分屏媒体卡片的播放/暂停图标
+	((IVIView*)GetViewBase())->UpdateSplitMediaView();
+}
+
+/* 设置播放模式：列表循环/单曲循环/文件夹循环/随机 */
+void MediaView::SetPlayMode(int nPlayMode, bool bShuffle)
+{
+	if(PLAY_MODE_SHUFFLE == nPlayMode)
+	{
+		m_bPlayShuffle = true;
+	}
+	else
+	{
+		if((PLAY_MODE_NORMAL == nPlayMode) || (PLAY_MODE_ONE == nPlayMode) || (PLAY_MODE_FOLDER == nPlayMode))
+		{
+			m_nPlayMode = nPlayMode;
+		}
+		m_bPlayShuffle = bShuffle;
+	}
+
+	OnUpdateUI_PlayMode(m_nPlayMode);
 }
 
 void MediaView::OnPlay_Audio()
@@ -1078,9 +1406,12 @@ void MediaView::OnReset_Play(int nPlayType)
 	T_PLAYMEDIA_URL tmpUrl;
 	char tmpFile[MAX_FILE_LEN] = {0};
 
+	memset(&tmpUrl,0,sizeof(T_PLAYMEDIA_URL));
+
 	MediaData &mData = MediaData::GetInstance();
 
 	tmpUrl.nPlayType = nPlayType;
+	tmpUrl.nParam = 0;
 	mData.GetCurPlayUrl(tmpFile);
 
 	memcpy(tmpUrl.strPlayUrl,tmpFile,MAX_FILE_LEN);
@@ -1183,32 +1514,8 @@ void MediaView::OnClick_AudioPlayWnd(const int nCtrlId, const int nBtStat, const
 		case UUID_PLAY_PLAY:
 		{
 			LOGDBG("&&&---m_nCurPlayStatus:%d",m_nCurPlayStatus);
-			if(Player_Play == m_nCurPlayStatus)
-			{
-				if(NULL != m_ViewController)
-				{
-					T_PLAYMEDIA_CMD tPlayCmd;
-					memset(&tPlayCmd,0,sizeof(T_PLAYMEDIA_CMD));
-
-					tPlayCmd.nPlayCmd = PLAY_CMD_PAUSE;
-					tPlayCmd.nParam = 0;
-
-					m_ViewController->SetMediaPlay_Cmd(tPlayCmd);
-				}
-			}
-			else if(Player_Pause == m_nCurPlayStatus)
-			{
-				if(NULL != m_ViewController)
-				{
-					T_PLAYMEDIA_CMD tPlayCmd;
-					memset(&tPlayCmd,0,sizeof(T_PLAYMEDIA_CMD));
-
-					tPlayCmd.nPlayCmd = PLAY_CMD_PLAY;
-					tPlayCmd.nParam = 0;
-
-					m_ViewController->SetMediaPlay_Cmd(tPlayCmd);
-				}
-			}
+			//播放键：正在播放则暂停，否则播放
+			SetPlayPause(Player_Play != m_nCurPlayStatus);
 		}
 		break;
 		case UUID_PLAY_PREV:
@@ -1237,31 +1544,17 @@ void MediaView::OnClick_AudioPlayWnd(const int nCtrlId, const int nBtStat, const
 		break;
 		case UUID_PLAY_MODE:
 		{
-			//play mode
-			if(PLAY_MODE_NORMAL == m_nPlayMode)
-			{
-				m_nPlayMode = PLAY_MODE_ONE;
-			}
-			else if(PLAY_MODE_ONE == m_nPlayMode)
-			{
-				m_nPlayMode = PLAY_MODE_NORMAL;
-			}
-			m_bPlayShuffle = false;
-			OnUpdateUI_PlayMode(m_nPlayMode);
+			//play mode：列表循环 → 单曲循环 → 文件夹循环 → 列表循环
+			int nNext = PLAY_MODE_NORMAL;
+			if(PLAY_MODE_NORMAL == m_nPlayMode)      nNext = PLAY_MODE_ONE;
+			else if(PLAY_MODE_ONE == m_nPlayMode)    nNext = PLAY_MODE_FOLDER;
+			else if(PLAY_MODE_FOLDER == m_nPlayMode) nNext = PLAY_MODE_NORMAL;
+			SetPlayMode(nNext, false);
 		}
 		break;
 		case UUID_PLAY_SHUFFLE:
 		{
-			if(m_bPlayShuffle)
-			{
-				m_bPlayShuffle = false;
-			}
-			else
-			{
-				m_bPlayShuffle = true;
-			}
-
-			OnUpdateUI_PlayMode(m_nPlayMode);
+			SetPlayMode(m_nPlayMode, !m_bPlayShuffle);
 		}
 		break;
 		case UUID_PLAY_SOURCE:
@@ -1750,6 +2043,13 @@ void MediaView::OnUpdateUI_PlayMode(int nPlayMode)
 		nPicID_Dn = 225;
 		nPicID_Fs = 224;
 	}
+	else if(PLAY_MODE_FOLDER == nPlayMode)
+	{
+		//文件夹循环暂用列表循环图标
+		nPicID = 220;
+		nPicID_Dn = 221;
+		nPicID_Fs = 220;
+	}
 
 	pUIMgr->GetUIAnalysisObj()->SetItemIcon(UIID_WNDID_MEDIA_AUDIO_PLAY,UUID_PLAY_MODE,nPicID,ITEM_STATE_NORMAL);
 	pUIMgr->GetUIAnalysisObj()->SetItemIcon(UIID_WNDID_MEDIA_AUDIO_PLAY,UUID_PLAY_MODE,nPicID_Dn,ITEM_STATE_PUSH);
@@ -1798,6 +2098,13 @@ void MediaView::OnUpdateUI_PlayMode_Video(int nPlayMode)
 		nPicID = 224;
 		nPicID_Dn = 225;
 		nPicID_Fs = 224;
+	}
+	else if(PLAY_MODE_FOLDER == nPlayMode)
+	{
+		//文件夹循环暂用列表循环图标
+		nPicID = 220;
+		nPicID_Dn = 221;
+		nPicID_Fs = 220;
 	}
 
 	pUIMgr->GetUIAnalysisObj()->SetItemIcon(UIID_WNDID_MEDIA_VIDEO_PLAY,UUID_VIDEO_PLAY_MODE,nPicID,ITEM_STATE_NORMAL);

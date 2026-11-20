@@ -88,6 +88,11 @@ public:
 	void GetPlayInfo(int &nStatus, int &nPos, int &nTotal, char *pszUrl, int nLen);
 	int  GetPlayMode()    { return m_nPlayMode; }
 	bool GetPlayShuffle() { return m_bPlayShuffle; }
+
+	//供分屏/外部调用：显式播放或暂停，并同步图标
+	void SetPlayPause(bool bPlay);
+	//设置播放模式（列表循环/单曲循环/文件夹循环/随机）
+	void SetPlayMode(int nPlayMode, bool bShuffle);
 	
 	int  GetUsbInsert(){ return m_nUsbInsert; }
 
@@ -124,6 +129,9 @@ private:
 	void OnPlay_Prev();
 
 	void OnUpdateUI_PlayMode(int nPlayMode);
+
+	void CheckAudioEnd();   //检测当前音频是否播放结束
+	void CheckVideoEnd();   //检测当前视频是否播放结束
 
 	void OnUpdateUI_AudioList();
 	void OnUpdateUI_VideoList();
@@ -180,6 +188,9 @@ private:
 	bool m_bVideoList_Update;   //记忆视频列表已插入
 
 	int m_nPlayMode_Video;
+
+	bool m_bAudioEndHandled;   //当前音频结束已处理，避免重复切歌
+	bool m_bVideoEndHandled;   //当前视频结束已处理
 };
 
 #endif /* HOMEVIEW_H_ */
