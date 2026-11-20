@@ -246,7 +246,7 @@ bool MediaView::OnHandle_Mount(T_APP_MSG* msg)
 		//search files
 		//m_FileList.Search_AllDirectory(strMount);
 
-		if (bInMediaWnd)
+		if ((bInMediaWnd) || (UIID_WNDID_MAIN == nCurWnd))
 		{
 			GetViewBase()->ShowWnd(UIID_WNDID_MEDIA_LOADING, true);
 

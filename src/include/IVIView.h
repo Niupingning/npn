@@ -184,6 +184,8 @@ private:
 	int m_nCurrWnd;
 	int m_nLastWnd;
 	bool m_bClosingSplit = false;
+	int m_nSplitRepaintCnt = 0;      // 分屏补画剩余次数
+	int m_nSplitFixCnt = 0;          // 分屏看护连续抬层次数（防止无限抬层闪烁）
 	MutexLock m_MutexSelfCheck;
 	MutexLock m_MutexAutoTest;
 	MutexLock m_Lock;

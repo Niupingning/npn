@@ -624,12 +624,56 @@ void IVIView::OnTimer(uint32_t id)
 		break;
 		case TIMERID_SPLIT_REPAINT:
 		{
-			// 分屏显示后延迟补画：视频层resize完成后，只重绘右侧卡片区，避免被视频层盖住
+			KillTimer(TIMERID_SPLIT_REPAINT);
+			// 用 App 层的 GetCurrWnd 判断，它在 OnShow 里同步更新，比 GetCurWndID 可靠
+			// 注意：不要在这里调 SplitInitWorkWnd()，它会 SplitPickDefaultPage 把用户停的页重置
 			if (UIID_WNDID_SPLIT == GetCurrWnd())
 			{
 				RECT rc = {1280, 0, 1920, 720};
 				GetUIWndMgrWrapper()->drawAllItem(rc);
 			}
+			if (m_nSplitRepaintCnt > 0)
+			{
+				--m_nSplitRepaintCnt;
+				SetTimer(TIMERID_SPLIT_REPAINT, 300);
+			}
+		}
+		break;
+		case TIMERID_SPLIT_WATCHDOG:
+		{
+			KillTimer(TIMERID_SPLIT_WATCHDOG);
+			// App 层不认为在分屏，说明用户已经切走，停止看护
+			if (UIID_WNDID_SPLIT != GetCurrWnd())
+			{
+				break;
+			}
+
+			CUIWndMgrWrapper* pUI = GetUIWndMgrWrapper();
+			if (NULL == pUI)
+			{
+				break;
+			}
+
+			long nTop = (long)pUI->GetCurWndID();
+			RECT rc = {1280, 0, 1920, 720};
+			if (UIID_WNDID_SPLIT != nTop)
+			{
+				// App 认为是分屏，GUI 最上层却不是30 → 被13等窗口盖住
+				LOGDBG("split watchdog: top=%ld != 30, re-raise cnt=%d", nTop, m_nSplitFixCnt);
+				if (m_nSplitFixCnt < 5)
+				{
+					++m_nSplitFixCnt;
+					ShowWnd(UIID_WNDID_SPLIT, false);
+					ShowWnd(UIID_WNDID_SPLIT, true);
+				}
+				pUI->drawAllItem(rc);
+			}
+			else
+			{
+				pUI->drawAllItem(rc);   // 层级正常，轻量补画一次
+			}
+
+			SetTimer(TIMERID_SPLIT_WATCHDOG, 500);
 		}
 		break;
 		default:
@@ -654,6 +698,11 @@ void IVIView::OnSplitScreenChange(int nSplit, int nAppType)
 			RECT rc = {1280, 0, 1920, 720};
 			GetUIWndMgrWrapper()->drawAllItem(rc);
 			LOGDBG("OnSplitScreenChange repaint right done");
+
+			// 立即画之外再连补几次，避免窗口还没 map 完时这一帧被丢掉
+			m_nSplitRepaintCnt = 6;
+			KillTimer(TIMERID_SPLIT_REPAINT);
+			SetTimer(TIMERID_SPLIT_REPAINT, 200);
 		}
 	}
 }
@@ -1236,14 +1285,30 @@ void IVIView::ShowSplitWnd(bool bSplit)
 		}
 		ShowWnd(UIID_WNDID_SPLIT, true);
 
+		// 立即画一次（大多数情况够用）
 		RECT rc = {1280, 0, 1920, 720};
 		GetUIWndMgrWrapper()->drawAllItem(rc);
+
+		// 再连补几次，覆盖窗口 map / 视频层 resize 的不同耗时
+		m_nSplitRepaintCnt = 6;
+		KillTimer(TIMERID_SPLIT_REPAINT);
+		SetTimer(TIMERID_SPLIT_REPAINT, 300);
+
+		// 启动分屏看护：如果30被13等窗口盖住，自动重新抬层
+		m_nSplitFixCnt = 0;
+		KillTimer(TIMERID_SPLIT_WATCHDOG);
+		SetTimer(TIMERID_SPLIT_WATCHDOG, 500);
     }
     else
     {
         ShowWnd(UIID_WNDID_SPLIT, false);
         ShowWnd(UIID_WNDID_BLACK, true);
         DrawAllItem();
+
+        // 退出分屏，停掉补画和看护
+        KillTimer(TIMERID_SPLIT_REPAINT);
+        KillTimer(TIMERID_SPLIT_WATCHDOG);
+        m_nSplitRepaintCnt = 0;
     }
 }
 
@@ -1255,6 +1320,11 @@ void IVIView::CloseSplitWnd()
 		return;
 	}
 	m_bClosingSplit = true;
+
+	// 先停掉补画和看护，避免收分屏过程中被定时器又抬回来
+	KillTimer(TIMERID_SPLIT_REPAINT);
+	KillTimer(TIMERID_SPLIT_WATCHDOG);
+	m_nSplitRepaintCnt = 0;
 
 	CUIWndMgrWrapper* pUI = GetUIWndMgrWrapper();
 	if (NULL == pUI)

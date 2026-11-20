@@ -118,6 +118,16 @@ void BTView::BTOnClick(CUIWndMng* pUI, long nWndId, long nCtrlId, int nBtState)
 {
 	BTData &mData = BTData::GetInstance();
 	LOGDBG("nWndId=%d,nCtrlId=%d,nBtState=%d",nWndId,nCtrlId,nBtState);
+
+    // 关闭按钮与蓝牙连接状态无关，任何状态都必须能退出去
+    if (UIID_BT_APPTOPBAR_CLOSE == nCtrlId)
+    {
+        GetViewBase()->ShowWnd(UIID_WNDID_BT_PHONE, false);
+        GetViewBase()->ShowWnd(UIID_WNDID_BT_MUSIC, false);
+        GetViewBase()->ShowWnd(UIID_WNDID_MAIN, true);
+        return;
+    }
+
 	if(1 == nBtState)
 	{
 		BTUpdateHomeContenInfo(nWndId,nCtrlId,nBtState,1);
@@ -1151,11 +1161,11 @@ void BTView::BTPhoneUpdateHomeContenInfo(long nWndId,const int nCtrlId, const in
 	}
 	switch(nCtrlId)
 	{
-		case UIID_BT_APPTOPBAR_CLOSE://关闭
-		{
-			GetViewBase()->ShowWnd(UIID_WNDID_MAIN, true);
-		}
-		break;
+		// case UIID_BT_APPTOPBAR_CLOSE://关闭
+		// {
+		// 	GetViewBase()->ShowWnd(UIID_WNDID_MAIN, true);
+		// }
+		// break;
 		case UIID_BT_APPTOPBAR_RENOVATE://刷新
 		{
 			GetViewBase()->ShowWnd(UIID_WNDID_BT_PHONE, true);
