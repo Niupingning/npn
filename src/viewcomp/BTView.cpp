@@ -124,6 +124,8 @@ void BTView::BTOnClick(CUIWndMng* pUI, long nWndId, long nCtrlId, int nBtState)
     {
         GetViewBase()->ShowWnd(UIID_WNDID_BT_PHONE, false);
         GetViewBase()->ShowWnd(UIID_WNDID_BT_MUSIC, false);
+		GetViewBase()->ShowWnd(UIID_WNDID_BT_PAIRLIST, false);
+        GetViewBase()->ShowWnd(UIID_WNDID_BT_PAIRREQ,  false);
         GetViewBase()->ShowWnd(UIID_WNDID_MAIN, true);
         return;
     }
@@ -866,6 +868,13 @@ void BTView::OnClick_BTMusicPlayWnd(const int nCtrlId, const int nBtStat, const 
 	}
 	switch(nCtrlId)
 	{
+		case UIID_BT_APPTOPBAR_CLOSE:   //顶栏关闭(1109)
+		case UIID_PUBLIC_CLOSE_BIN:     //顶栏关闭(2212)
+		{
+			GetViewBase()->ShowWnd(UIID_WNDID_BT_MUSIC, false);
+			GetViewBase()->ShowWnd(UIID_WNDID_MAIN, true);
+		}
+		break;
 		case UIID_BT_PAGECONTENT_COMPNAME:
 		{
 			if(1 == nBtStat)
@@ -979,6 +988,14 @@ void BTView::BTInitPhoneWorkWnd()
 void BTView::BTPhoneOnClick(CUIWndMng* pUI, long nWndId, long nCtrlId, int nBtState)
 {
 	LOGDBG("new nWndId=%d,nCtrlId=%d,nBtState=%d",nWndId,nCtrlId,nBtState);
+
+	if ((UIID_BT_APPTOPBAR_CLOSE == nCtrlId) || (UIID_PUBLIC_CLOSE_BIN == nCtrlId))
+	{
+		GetViewBase()->ShowWnd(UIID_WNDID_BT_PHONE, false);
+		GetViewBase()->ShowWnd(UIID_WNDID_BT_MUSIC, false);
+		GetViewBase()->ShowWnd(UIID_WNDID_MAIN, true);
+		return;
+	}
 
 	if(nCtrlId == UIID_BT_KEYBOARD_DIALBUTTON)
 	{

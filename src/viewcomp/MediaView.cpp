@@ -326,6 +326,51 @@ bool MediaView::OnPlayUrl_Time(T_APP_MSG* msg)
 			m_bAudioEndHandled = false;
 		}
 
+		//总时长未知时的兜底结束判定：播放位置连续 3 次不再前进，视为这首播完了
+		if((m_nPlayAuido_Total <= 0) && (Player_Play == m_nCurPlayStatus))
+		{
+			static int s_nLastPos = -1;
+			static int s_nSameCnt = 0;
+
+			if((m_nPlayAudio_pos == s_nLastPos) && (m_nPlayAudio_pos > 0))
+			{
+				s_nSameCnt++;
+				if(s_nSameCnt >= 3)
+				{
+					s_nSameCnt = 0;
+					s_nLastPos = -1;
+
+					if(m_FileList.GetAudioFileNum() <= 1 && PLAY_MODE_ONE != m_nPlayMode)
+					{
+						m_nCurPlayStatus = Player_Finish;
+						m_bAudioEndHandled = true;
+
+						if(NULL != m_ViewController)
+						{
+							T_PLAYMEDIA_CMD tStopCmd;
+							memset(&tStopCmd,0,sizeof(T_PLAYMEDIA_CMD));
+							tStopCmd.nPlayCmd = PLAY_CMD_STOP;
+							tStopCmd.nParam = 0;
+							m_ViewController->SetMediaPlay_Cmd(tStopCmd);
+						}
+
+						OnUpdate_PlayPause(m_nCurPlayStatus);
+						((IVIView*)GetViewBase())->UpdateSplitMediaView();
+					}
+					else if(!m_bAudioEndHandled)
+					{
+						m_bAudioEndHandled = true;
+						OnPlay_Next();
+					}
+				}
+			}
+			else
+			{
+				s_nSameCnt = 0;
+				s_nLastPos = m_nPlayAudio_pos;
+			}
+		}
+
         //更新总播放时间
 		int nMin = m_nPlayAuido_Total / 60;
 		int sec = m_nPlayAuido_Total % 60;
@@ -450,6 +495,17 @@ bool MediaView::OnPlayUrl_Status(T_APP_MSG* msg)
 				if(m_FileList.GetAudioFileNum() <= 1 && PLAY_MODE_ONE != m_nPlayMode)
 				{
 					m_bAudioEndHandled = true;
+
+					//真正把播放器停掉，保证按钮/状态一致（图标由上面的 OnUpdate_PlayPause 改成“播放”）
+					if(NULL != m_ViewController)
+					{
+						T_PLAYMEDIA_CMD tStopCmd;
+						memset(&tStopCmd,0,sizeof(T_PLAYMEDIA_CMD));
+						tStopCmd.nPlayCmd = PLAY_CMD_STOP;
+						tStopCmd.nParam = 0;
+						m_ViewController->SetMediaPlay_Cmd(tStopCmd);
+					}
+
 					((IVIView*)GetViewBase())->UpdateSplitMediaView();
 					break;
 				}

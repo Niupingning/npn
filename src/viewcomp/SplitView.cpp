@@ -202,9 +202,17 @@ void SplitView::SplitOnClick(CUIWndMng* pUI, long nCtrlId, int nBtState)
 					SplitUpdateUSB();
 					return;
 				case UIID_SPLIT_MEDIA_LOOP:
-					pMedia->SetPlayMode(PLAY_MODE_NORMAL, false);
+				{
+					int nMode = pMedia->GetPlayMode();
+					int nNext = PLAY_MODE_NORMAL;
+					if(PLAY_MODE_NORMAL == nMode)       nNext = PLAY_MODE_ONE;
+					else if(PLAY_MODE_ONE == nMode)     nNext = PLAY_MODE_FOLDER;
+					else                                nNext = PLAY_MODE_NORMAL;
+
+					pMedia->SetPlayMode(nNext, false);
 					SplitUpdateUSB();
 					return;
+				}
 				case UIID_SPLIT_MEDIA_SHUFFLE:
 					pMedia->SetPlayMode(pMedia->GetPlayMode(), !pMedia->GetPlayShuffle());
 					SplitUpdateUSB();
@@ -433,10 +441,7 @@ void SplitView::SplitUpdateUSB()
 	char szUrl[512] = {0};
 	pMedia->GetPlayInfo(nStatus, nPos, nTotal, szUrl, sizeof(szUrl));
 
-	// 播放/暂停图标：显式设置图标，避免资源默认图标颠倒（参照 BT 卡片）
-	// 211=暂停 212=暂停按下  214=播放 215=播放按下
-	// 播放中 或 播放结束(单曲)：显示暂停键（点击可重播）；其余显示播放键
-	if (Player_Play == nStatus || Player_Finish == nStatus)
+	if (Player_Play == nStatus)
 	{
 		p->SetItemIcon(UIID_WNDID_SPLIT, UIID_SPLIT_MEDIA_PAUSE, 211, ITEM_STATE_NORMAL);
 		p->SetItemIcon(UIID_WNDID_SPLIT, UIID_SPLIT_MEDIA_PAUSE, 212, ITEM_STATE_PUSH);
@@ -490,24 +495,14 @@ void SplitView::SplitUpdateUSB()
 		p->SetItemText(UIID_WNDID_SPLIT, UIID_SPLIT_MEDIA_ALBUM, szAlbum);
 	}
 
-	// 播放模式图标：四个按钮全部显式设图标，避免 FLODER/SINGLE 无图标渲染空白
 	int nMode = pMedia->GetPlayShuffle() ? PLAY_MODE_SHUFFLE : pMedia->GetPlayMode();
 
-	p->SetItemIcon(UIID_WNDID_SPLIT, UIID_SPLIT_MEDIA_LOOP,   220, ALL_STATE); //列表循环
-	p->SetItemIcon(UIID_WNDID_SPLIT, UIID_SPLIT_MEDIA_SINGLE, 224, ALL_STATE); //单曲循环
-	p->SetItemIcon(UIID_WNDID_SPLIT, UIID_SPLIT_MEDIA_FLODER, 220, ALL_STATE); //文件夹循环(暂无专用图标)
-	p->SetItemIcon(UIID_WNDID_SPLIT, UIID_SPLIT_MEDIA_SHUFFLE,
-		(PLAY_MODE_SHUFFLE == nMode) ? 234 : 232, ALL_STATE); //随机:开234/关232
+	int nPicLoop = 2241;                                    //列表循环
+	if(PLAY_MODE_ONE == nMode)          nPicLoop = 2253;    //单曲循环
+	else if(PLAY_MODE_FOLDER == nMode)  nPicLoop = 2249;    //文件夹循环
+	else if(PLAY_MODE_SHUFFLE == nMode) nPicLoop = 2245;    //随机
 
-	// 四个模式按键的选中态
-	p->SetItemState(UIID_WNDID_SPLIT, UIID_SPLIT_MEDIA_LOOP,
-		(PLAY_MODE_NORMAL == nMode) ? ITEM_STATE_SELECTED : ITEM_STATE_NORMAL);
-	p->SetItemState(UIID_WNDID_SPLIT, UIID_SPLIT_MEDIA_SHUFFLE,
-		(PLAY_MODE_SHUFFLE == nMode) ? ITEM_STATE_SELECTED : ITEM_STATE_NORMAL);
-	p->SetItemState(UIID_WNDID_SPLIT, UIID_SPLIT_MEDIA_FLODER,
-		(PLAY_MODE_FOLDER == nMode) ? ITEM_STATE_SELECTED : ITEM_STATE_NORMAL);
-	p->SetItemState(UIID_WNDID_SPLIT, UIID_SPLIT_MEDIA_SINGLE,
-		(PLAY_MODE_ONE == nMode) ? ITEM_STATE_SELECTED : ITEM_STATE_NORMAL);
+	p->SetItemIcon(UIID_WNDID_SPLIT, UIID_SPLIT_MEDIA_LOOP, nPicLoop, ALL_STATE);
 }
 
 /* 分屏媒体卡片跟随播放刷新：MediaView 每秒 tick 时调用 */
