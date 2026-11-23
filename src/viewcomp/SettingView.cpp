@@ -424,7 +424,8 @@ int SettingView::writeCurrIdToTxt(uint16_t id) {
  */
 int SettingView::readCurrIdFromTxt(uint16_t* out_id) {
 	LOGDBG("read curr car type id ");
-    if (out_id == nullptr) {
+    if (out_id == nullptr) 
+	{
         LOGDBG("错误：out_id为空指针！ out_id null\n");
         return -1;
     }
@@ -432,8 +433,18 @@ int SettingView::readCurrIdFromTxt(uint16_t* out_id) {
     *out_id = 0; // 初始化避免脏数据
     FILE* fp = fopen(ID_FILE_PATH, "r");
     if (fp == nullptr) {
-        LOGDBG("文件不存在或打开失败（no file or open fail）：%s\n", ID_FILE_PATH);
-        return -2;
+        LOGDBG("文件不存在，新建默认文件：%s，默认值=1\n", ID_FILE_PATH);
+        // 不存在，创建并写入默认值 1
+        FILE* fp_w = fopen(ID_FILE_PATH, "w");
+        if (fp_w == nullptr) {
+            LOGDBG("新建文件写入失败！ create and write fail: %s\n", ID_FILE_PATH);
+            return -4;
+        }
+        fprintf(fp_w, "%hu", (uint16_t)1);
+        fclose(fp_w);
+        *out_id = 1;
+        LOGDBG("新建默认ID文件成功，id=1\n");
+        return 0;
     }
     int read_ret = fscanf(fp, "%hu", out_id); // %hu 匹配uint16_t
     fclose(fp);
