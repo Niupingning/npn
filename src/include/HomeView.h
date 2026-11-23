@@ -86,6 +86,8 @@ private:
 	bool Update_CP_Connet(T_APP_MSG* msg=nullptr);
 	bool Update_AA_Connet(T_APP_MSG* msg=nullptr);
 	bool Update_USB_Insert(T_APP_MSG* msg=NULL);
+
+	void RefreshCPAAIcons();          // CP/AA 图标按互斥规则统一重算
 	
 private:
 	IVIController * m_ViewController;

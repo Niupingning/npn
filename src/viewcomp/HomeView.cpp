@@ -145,6 +145,52 @@ bool HomeView::Update_CP_Show(T_APP_MSG* msg)
 	return true;
 }
 
+void HomeView::RefreshCPAAIcons()
+{
+	CUIWndMgrWrapper *pUIMgr = GetViewBase()->GetUIWndMgrWrapper();
+	if (nullptr == pUIMgr)
+	{
+		LOGDBG("nullptr == pUIMgr Error!!");
+		return;
+	}
+	HomeData &mData = HomeData::GetInstance();
+
+	int nCPConnectStatus = 0;
+	int nAAConnectStatus = 0;
+	mData.GetINTData(INT_CARPLAYCONNECTSTATUS, nCPConnectStatus);
+	mData.GetINTData(INT_ANDRIODCONNECTSTATUS, nAAConnectStatus);
+
+	LOGFILE("CPAAIcons CP=%d AA=%d", nCPConnectStatus, nAAConnectStatus);
+
+	// CP 与 AA 互斥：同一时刻只允许一个互联图标点亮
+	bool bCPOn = (1 == nCPConnectStatus) && (1 != nAAConnectStatus);
+	bool bAAOn = (1 == nAAConnectStatus) && (1 != nCPConnectStatus);
+
+	if (bCPOn)
+	{
+		pUIMgr->GetUIAnalysisObj()->EnableItem(UIID_WNDID_MAIN, UIID_HOME_CP, true);
+		pUIMgr->GetUIAnalysisObj()->SetItemState(UIID_WNDID_MAIN, UIID_HOME_CP, ITEM_STATE_NORMAL);
+	}
+	else
+	{
+		pUIMgr->GetUIAnalysisObj()->SetItemIcon(UIID_WNDID_MAIN, UIID_HOME_CP, 2311, ITEM_STATE_DISABLE);
+		pUIMgr->GetUIAnalysisObj()->SetItemState(UIID_WNDID_MAIN, UIID_HOME_CP, ITEM_STATE_DISABLE);
+		pUIMgr->GetUIAnalysisObj()->EnableItem(UIID_WNDID_MAIN, UIID_HOME_CP, false);
+	}
+
+	if (bAAOn)
+	{
+		pUIMgr->GetUIAnalysisObj()->EnableItem(UIID_WNDID_MAIN, UIID_HOME_AA, true);
+		pUIMgr->GetUIAnalysisObj()->SetItemState(UIID_WNDID_MAIN, UIID_HOME_AA, ITEM_STATE_NORMAL);
+	}
+	else
+	{
+		pUIMgr->GetUIAnalysisObj()->SetItemIcon(UIID_WNDID_MAIN, UIID_HOME_AA, 2312, ITEM_STATE_DISABLE);
+		pUIMgr->GetUIAnalysisObj()->SetItemState(UIID_WNDID_MAIN, UIID_HOME_AA, ITEM_STATE_DISABLE);
+		pUIMgr->GetUIAnalysisObj()->EnableItem(UIID_WNDID_MAIN, UIID_HOME_AA, false);
+	}
+}
+
 bool HomeView::Update_CP_Connet(T_APP_MSG* msg)
 {
 	CUIWndMgrWrapper *pUIMgr = GetViewBase()->GetUIWndMgrWrapper();
@@ -161,19 +207,11 @@ bool HomeView::Update_CP_Connet(T_APP_MSG* msg)
 	LOGDBG("&&&&----nCPConnectStatus:%d",nCPConnectStatus);
 	LOGFILE("CPConn=%d", nCPConnectStatus);
 
-	if(1 == nCPConnectStatus)
-	{
-		//cp connect icon show
-		pUIMgr->GetUIAnalysisObj()->EnableItem(UIID_WNDID_MAIN,UIID_HOME_CP,true);
-		pUIMgr->GetUIAnalysisObj()->SetItemState(UIID_WNDID_MAIN,UIID_HOME_CP,ITEM_STATE_NORMAL);
-	}
-	else
-	{
-		//cp diconnect icon disable
-		pUIMgr->GetUIAnalysisObj()->SetItemIcon(UIID_WNDID_MAIN,UIID_HOME_CP,2311,ITEM_STATE_DISABLE);
-		pUIMgr->GetUIAnalysisObj()->SetItemState(UIID_WNDID_MAIN,UIID_HOME_CP,ITEM_STATE_DISABLE);
-		pUIMgr->GetUIAnalysisObj()->EnableItem(UIID_WNDID_MAIN,UIID_HOME_CP,false);
+	// 统一按 CP/AA 互斥规则重算两个互联图标
+	RefreshCPAAIcons();
 
+	if (1 != nCPConnectStatus)
+	{
 		int nAppStatus = APP_STATUS_NO;
 		mData.GetINTData(INT_APPSTATUS, nAppStatus);
 		if ((nullptr != msg) && (APP_STATUS_CP == nAppStatus))
@@ -200,19 +238,11 @@ bool HomeView::Update_AA_Connet(T_APP_MSG* msg)
 
 	LOGDBG("&&&&----nAAConnectStatus:%d",nAAConnectStatus);
 
-	if(1 == nAAConnectStatus)
-	{
-		//AA connect icon show
-		pUIMgr->GetUIAnalysisObj()->EnableItem(UIID_WNDID_MAIN,UIID_HOME_AA,true);
-		pUIMgr->GetUIAnalysisObj()->SetItemState(UIID_WNDID_MAIN,UIID_HOME_AA,ITEM_STATE_NORMAL);
-	}
-	else
-	{
-		//AA diconnect icon disable
-		pUIMgr->GetUIAnalysisObj()->SetItemIcon(UIID_WNDID_MAIN,UIID_HOME_AA,2312,ITEM_STATE_DISABLE);
-		pUIMgr->GetUIAnalysisObj()->SetItemState(UIID_WNDID_MAIN,UIID_HOME_AA,ITEM_STATE_DISABLE);
-		pUIMgr->GetUIAnalysisObj()->EnableItem(UIID_WNDID_MAIN,UIID_HOME_AA,false);
+	// 统一按 CP/AA 互斥规则重算两个互联图标
+	RefreshCPAAIcons();
 
+	if (1 != nAAConnectStatus)
+	{
 		int nAppStatus = APP_STATUS_NO;
 		mData.GetINTData(INT_APPSTATUS, nAppStatus);
 		if ((nullptr != msg) && (APP_STATUS_AA == nAppStatus))
