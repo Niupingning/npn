@@ -1412,12 +1412,12 @@ void BTView::OnClick_BTPhoneKeyborad(long nWndId, const int nCtrlId, const int n
 			//免提
 			LOGDBG("---xsj---keyboard---:nWndId=%d,nCtrlId=%d,nBtStat=%d",nWndId,nCtrlId,nBtStat);
 			int nCallMode = mData.GetBTPhoneCallMode();
-			if(nCallMode = 0)
+			if(nCallMode == 0)
 			{
 				pUIMgr->GetUIAnalysisObj()->SetItemIcon(UIID_WNDID_BT_PHONE,UIID_BT_CALLING_PHONEANSWER,334,ITEM_STATE_SELECTED);
 				m_ViewController->SendWirelessInfoData(WIRELESS_EVENT_BT_PHONE_CALL_MODE,1);
 			}
-			else if(nCallMode = 1)
+			else if(nCallMode == 1)
 			{
 				//pUIMgr->GetUIAnalysisObj()->SetItemIcon(UIID_WNDID_BT_PHONE,UIID_BT_CALLING_PHONEANSWER,334,ITEM_STATE_NORMAL);
 				m_ViewController->SendWirelessInfoData(WIRELESS_EVENT_BT_PHONE_CALL_MODE,0);
@@ -1429,12 +1429,12 @@ void BTView::OnClick_BTPhoneKeyborad(long nWndId, const int nCtrlId, const int n
 			//关麦
 			LOGDBG("---xsj---keyboard---:nWndId=%d,nCtrlId=%d,nBtStat=%d",nWndId,nCtrlId,nBtStat);
 			int nCallMode = mData.GetBTMuteStatus();
-			if(nCallMode = 0)
+			if(nCallMode == 0)
 			{
 				pUIMgr->GetUIAnalysisObj()->SetItemIcon(UIID_WNDID_BT_PHONE,UIID_BT_CALLING_MICROPHONE,405,ITEM_STATE_SELECTED);
 				m_ViewController->SendWirelessInfoData(WIRELESS_EVENT_BT_PHONE_MIC_MUTE,1);
 			}
-			else if(nCallMode = 1)
+			else if(nCallMode == 1)
 			{
 				pUIMgr->GetUIAnalysisObj()->SetItemIcon(UIID_WNDID_BT_PHONE,UIID_BT_CALLING_MICROPHONE,405,ITEM_STATE_NORMAL);
 				m_ViewController->SendWirelessInfoData(WIRELESS_EVENT_BT_PHONE_MIC_MUTE,0);
@@ -1487,7 +1487,8 @@ bool BTView::UpdateBTCallInfo(T_APP_MSG* msg)
 	size_t out_len = 128;
 
 	wchar_t strTempInput[TEXT_BUF_LEN] = {0};
-	m_nCallStatus = call_status;	
+	m_nCallStatus = call_status;
+	m_nTabStatus = 0;
 	switch(call_status)
 	{
 		case BTCALL_STATE_IDLE:
