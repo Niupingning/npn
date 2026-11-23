@@ -326,7 +326,6 @@ bool MediaView::OnPlayUrl_Time(T_APP_MSG* msg)
 			m_bAudioEndHandled = false;
 		}
 
-		//总时长未知时的兜底结束判定：播放位置连续 3 次不再前进，视为这首播完了
 		if((m_nPlayAuido_Total <= 0) && (Player_Play == m_nCurPlayStatus))
 		{
 			static int s_nLastPos = -1;
