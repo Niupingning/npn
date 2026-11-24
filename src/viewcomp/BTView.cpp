@@ -879,14 +879,6 @@ void BTView::OnClick_BTMusicPlayWnd(const int nCtrlId, const int nBtStat, const 
 			GetViewBase()->ShowWnd(UIID_WNDID_MAIN, true);
 		}
 		break;
-		case UIID_BT_TOPBAR_CLOSE:
-		{
-			if(1 == nBtStat)
-			{
-				GetViewBase()->ShowWnd(UIID_WNDID_MAIN, true);
-			}
-		}
-		break;
 		case UIID_BT_TOPBAR_SETTING:
 		{
 			GetViewBase()->ShowWnd(UIID_WNDID_SETTING, true);
