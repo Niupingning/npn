@@ -25,6 +25,7 @@ const int UIID_BT_TOPBAR_DATE = 2;
 const int UIID_BT_TOPBAR_WKDAY = 3;
 const int UIID_BT_TOPBAR_TIME = 4;
 const int UIID_BT_TOPBAR_SETTING = 5;
+const int UIID_BT_TOPBAR_CLOSE = 2212;
 
 //BT Music Page Content
 const int UIID_BT_PAGECONTENT_COMPNAME = 1003;

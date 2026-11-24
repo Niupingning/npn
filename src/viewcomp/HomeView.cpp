@@ -550,15 +550,16 @@ void HomeView::KillTimer_AvmShow()
 
 void HomeView::OnStartAvm_View(int nView)
 {
-	if(0 == nView)
+	if(2 == nView)
 	{
-		((IVIView*)GetViewBase())->SetWindow_BK(UIID_WNDID_AVM,11);
+		((IVIView*)GetViewBase())->SetWindow_BK(UIID_WNDID_AVM,UUID_BACK_PIC);
 	}
 	//char view_cmd[128] = {0};
 	//char shell_path[] = {"/application/bin/avm_view.sh"};
 	//sprintf(view_cmd,"%s -a %d &",shell_path,nView);
 	//LOGDBG("&&&---view_cmd:%s",view_cmd);
 	//system(view_cmd);
+	LOGDBG("&&&---OnStartAvm_View--nView:%d",nView);
 	if(0 == nView)
 	{
 		system("echo -n 0 > /media/flash/userdata/xcb/avm_sts");
@@ -566,6 +567,10 @@ void HomeView::OnStartAvm_View(int nView)
 	else if(1 == nView)
 	{
 		system("echo -n 1 > /media/flash/userdata/xcb/avm_sts");
+	}
+	else if(2 == nView)
+	{
+		system("echo -n 2 > /media/flash/userdata/xcb/avm_sts");
 	}
 }
 

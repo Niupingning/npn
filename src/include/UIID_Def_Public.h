@@ -123,6 +123,8 @@ const int UIID_AVM_FRONT = 1007; //前
 const int UIID_AVM_LEFT = 1008; //左
 const int UIID_AVM_RIGHT = 1009; //右
 
+const int UUID_BACK_PIC = 2320;   //黑屏背景图片ID
+
 enum
 {
     IVI_SOURCE_IDLE       = 0,
