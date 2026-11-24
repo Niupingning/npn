@@ -14,6 +14,7 @@ BTData::BTData()
 	m_nCurrWnd = 0;
     m_nLastWnd = 1;
     m_PhoneTime = 0;
+    m_BTCallState = 0;
 }
 
 BTData::~BTData()
@@ -183,6 +184,28 @@ void BTData::GetBTPhoneInfo(T_STR_BT_CALLERINFO &tBTCall)
 {
     Lock();
     tBTCall = m_tBTCall;
+    UnLock();
+}
+
+void BTData::SaveBTPhoneCallState(const int nState)
+{
+    Lock();
+    m_BTCallState = nState;
+    UnLock();
+}
+
+int BTData::GetBTPhoneCallState()
+{
+    Lock();
+    int nState = m_BTCallState;
+    UnLock();
+    return nState;
+}
+
+void BTData::ClearBTPhoneCallInfo()
+{
+    Lock();
+    m_tBTCall = T_STR_BT_CALLERINFO();
     UnLock();
 }
 

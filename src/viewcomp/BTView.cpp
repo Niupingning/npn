@@ -557,14 +557,14 @@ bool BTView::UpdateBTConnectSts(T_APP_MSG* msg)
 	int nBTConnectStatus = 0;
 	nBTConnectStatus = mData.GetBtConnectStatus();
 
-	LOGDBG("-----XSJXSJXSJDONOTSHOWPAIRREQWND----nBTConnectStatus = %d-----", nBTConnectStatus);
-	HomeData &mHData = HomeData::GetInstance();
-	int nCurrWnd = mHData.GetCurrWnd();
-	
-	if((UIID_WNDID_BT_PHONE == nCurrWnd) || (UIID_WNDID_BT_MUSIC == nCurrWnd)
-		|| (UIID_WNDID_BT_PAIRREQ == nCurrWnd) || (UIID_WNDID_BT_PAIRLIST == nCurrWnd))
+	LOGDBG("-----BTConnectStatus=%d, m_nCallStatus=%d-----", nBTConnectStatus, m_nCallStatus);
+
+	if(2 == nBTConnectStatus)
 	{
-		if(nBTConnectStatus == 2)
+		HomeData &mHData = HomeData::GetInstance();
+		int nCurrWnd = mHData.GetCurrWnd();
+		if((UIID_WNDID_BT_PHONE == nCurrWnd) || (UIID_WNDID_BT_MUSIC == nCurrWnd)
+			|| (UIID_WNDID_BT_PAIRREQ == nCurrWnd) || (UIID_WNDID_BT_PAIRLIST == nCurrWnd))
 		{
 			if(m_nBTAppType == 1)
 			{
@@ -579,10 +579,14 @@ bool BTView::UpdateBTConnectSts(T_APP_MSG* msg)
 				GetViewBase()->ShowWnd(UIID_WNDID_MAIN, true);
 			}
 		}
-		else
-		{
-			GetViewBase()->ShowWnd(UIID_WNDID_MAIN, true);
-		}
+	}
+	else
+	{
+		// R8：蓝牙断开 → 通话/响铃/拨号界面整体复位，然后回主界面
+		LOGDBG("BT disconnected, reset call UI, prev m_nCallStatus=%d", m_nCallStatus);
+		ResetCallUI();
+		GetViewBase()->ShowWnd(UIID_WNDID_BT_PHONE, false);
+		GetViewBase()->ShowWnd(UIID_WNDID_MAIN, true);
 	}
 
 	return true;
@@ -1195,13 +1199,18 @@ void BTView::BTPhoneUpdateHomeContenInfo(long nWndId,const int nCtrlId, const in
 			//pUIMgr->GetUIAnalysisObj()->SetItemIcon(UIID_WNDID_BT_PHONE,UIID_BT_LEFTBAR_NUMKEYBOARD,326,ITEM_STATE_PUSH);
 			//pUIMgr->GetUIAnalysisObj()->SetItemIcon(UIID_WNDID_BT_PHONE,UIID_BT_LEFTBAR_NUMKEYBOARD,326,ITEM_STATE_NORMAL);
 			//pUIMgr->GetUIAnalysisObj()->SetItemIcon(UIID_WNDID_BT_PHONE,UIID_BT_LEFTBAR_NUMKEYBOARD,326,ITEM_STATE_SELECTED);
-			pUIMgr->GetUIAnalysisObj()->ShowItem(UIID_WNDID_BT_PHONE,UIID_BT_KEYBOARD_ALL,true);
+			int call_status = m_nCallStatus;
+			// 来电/通话页显示时收起拨号盘，避免键盘和整页通话界面重叠
+			bool bHideKeyboard = (call_status == BTCALL_STATE_INCOMING ||
+								  call_status == BTCALL_STATE_PRORESS  ||
+								  call_status == BTCALL_STATE_HOLD     ||
+								  call_status == BTCALL_STATE_PARTIALHOLD);
+			pUIMgr->GetUIAnalysisObj()->ShowItem(UIID_WNDID_BT_PHONE,UIID_BT_KEYBOARD_ALL,!bHideKeyboard);
 			pUIMgr->GetUIAnalysisObj()->ShowItem(UIID_WNDID_BT_PHONE,UIID_BT_APPTOPBAR_DEVICENAME,true);
 			pUIMgr->GetUIAnalysisObj()->ShowItem(UIID_WNDID_BT_PHONE,UIID_BT_ADDRESSBK_ALL,false);
 			pUIMgr->GetUIAnalysisObj()->ShowItem(UIID_WNDID_BT_PHONE,UIID_BT_CALLRECORD_ALL,false);
-			LOGDBG("---keyboard---:nWndId=%d,nCtrlId=%d,nBtState=%d",nWndId,nCtrlId,nBtState);
-			//if calling, show call info
-			int call_status = m_nCallStatus;
+
+			HideAllCallPages();          // 先清空，保证单页
 			switch(call_status)
 			{				
 				case BTCALL_STATE_INCOMING:				
@@ -1210,7 +1219,9 @@ void BTView::BTPhoneUpdateHomeContenInfo(long nWndId,const int nCtrlId, const in
 				case BTCALL_STATE_OUTGOING:			
 					pUIMgr->GetUIAnalysisObj()->ShowItem(UIID_WNDID_BT_PHONE,UIID_BT_ONDIALING_ALL,true);
 					break;
-				case BTCALL_STATE_PRORESS:			
+				case BTCALL_STATE_PRORESS:
+				case BTCALL_STATE_HOLD:
+				case BTCALL_STATE_PARTIALHOLD:
 					pUIMgr->GetUIAnalysisObj()->ShowItem(UIID_WNDID_BT_PHONE,UIID_BT_CALLING_ALL,true);
 					break;
 			}
@@ -1463,6 +1474,49 @@ void BTView::OnClick_BTUnconnected(CUIWndMng* pUI, long nWndId, long nCtrlId, in
 
 }
 
+void BTView::HideAllCallPages()
+{
+	CUIWndMgrWrapper *pUIMgr = GetViewBase()->GetUIWndMgrWrapper();
+	if (nullptr == pUIMgr)
+	{
+		LOGDBG("nullptr == pUIMgr Error!!");
+		return;
+	}
+	pUIMgr->GetUIAnalysisObj()->ShowItem(UIID_WNDID_BT_PHONE, UIID_BT_ONDIALING_ALL, false);
+	pUIMgr->GetUIAnalysisObj()->ShowItem(UIID_WNDID_BT_PHONE, UIID_BT_COMECALL_ALL,  false);
+	pUIMgr->GetUIAnalysisObj()->ShowItem(UIID_WNDID_BT_PHONE, UIID_BT_CALLING_ALL,  false);
+}
+
+void BTView::ResetCallUI()
+{
+	CUIWndMgrWrapper *pUIMgr = GetViewBase()->GetUIWndMgrWrapper();
+	if (nullptr == pUIMgr)
+	{
+		LOGDBG("nullptr == pUIMgr Error!!");
+		return;
+	}
+
+	// 1) 收起所有通话相关整页和按钮
+	HideAllCallPages();
+	pUIMgr->GetUIAnalysisObj()->ShowItem(UIID_WNDID_BT_PHONE, UIID_BT_ONDIALING_END,      false);
+	pUIMgr->GetUIAnalysisObj()->ShowItem(UIID_WNDID_BT_PHONE, UIID_BT_KEYBOARD_ALL,        true);
+	pUIMgr->GetUIAnalysisObj()->ShowItem(UIID_WNDID_BT_PHONE, UIID_BT_KEYBOARD_DIALBUTTON,  true);
+
+	// 2) 视图状态复位
+	m_nCallStatus       = BTCALL_STATE_IDLE;
+	m_nTabStatus        = 0;
+	m_nCallMuteMode     = 0;
+	m_nCallHandfreeMode = 0;
+	memset(m_InputKeyboard, 0, TEXT_BUF_LEN);
+
+	// 3) 数据状态复位，避免下次进页面还残留上一通的号码
+	BTData &mData = BTData::GetInstance();
+	mData.SaveBTPhoneCallState(BTCALL_STATE_IDLE);
+	mData.ClearBTPhoneCallInfo();
+
+	LOGDBG("ResetCallUI done");
+}
+
 bool BTView::UpdateBTCallInfo(T_APP_MSG* msg)
 {
 	unsigned char call_status = msg->Param0;
@@ -1487,6 +1541,23 @@ bool BTView::UpdateBTCallInfo(T_APP_MSG* msg)
 	size_t out_len = 128;
 
 	wchar_t strTempInput[TEXT_BUF_LEN] = {0};
+	int nPrevCallStatus = m_nCallStatus;
+	LOGDBG("UpdateBTCallInfo prev=%d, cur=%d", nPrevCallStatus, call_status);
+
+	bool bBusyCall = (nPrevCallStatus == BTCALL_STATE_INCOMING    ||
+					  nPrevCallStatus == BTCALL_STATE_OUTGOING    ||
+					  nPrevCallStatus == BTCALL_STATE_PRORESS     ||
+					  nPrevCallStatus == BTCALL_STATE_HOLD        ||
+					  nPrevCallStatus == BTCALL_STATE_PARTIALHOLD);
+	bool bNewCall  = (call_status == BTCALL_STATE_INCOMING ||
+					  call_status == BTCALL_STATE_HOLD     ||
+					  call_status == BTCALL_STATE_PARTIALHOLD);
+	if(bBusyCall && bNewCall)
+	{
+		LOGDBG("call waiting ignored by view");
+		return true;
+	}
+
 	m_nCallStatus = call_status;
 	m_nTabStatus = 0;
 	switch(call_status)
@@ -1505,6 +1576,9 @@ bool BTView::UpdateBTCallInfo(T_APP_MSG* msg)
 			pUIMgr->GetUIAnalysisObj()->ShowItem(UIID_WNDID_BT_PHONE,UIID_BT_ONDIALING_END,false);
 			break;
         case BTCALL_STATE_INCOMING:		
+			pUIMgr->GetUIAnalysisObj()->ShowItem(UIID_WNDID_BT_PHONE,UIID_BT_KEYBOARD_ALL,false);
+			pUIMgr->GetUIAnalysisObj()->ShowItem(UIID_WNDID_BT_PHONE,UIID_BT_ONDIALING_ALL,false);
+			pUIMgr->GetUIAnalysisObj()->ShowItem(UIID_WNDID_BT_PHONE,UIID_BT_CALLING_ALL,false);
 			pUIMgr->GetUIAnalysisObj()->ShowItem(UIID_WNDID_BT_PHONE,UIID_BT_CALLRECORD_ALL,false);
 			pUIMgr->GetUIAnalysisObj()->ShowItem(UIID_WNDID_BT_PHONE,UIID_BT_ADDRESSBK_ALL,false);
 			pUIMgr->GetUIAnalysisObj()->ShowItem(UIID_WNDID_BT_PHONE,UIID_BT_KEYBOARD_DIALBUTTON,false);
@@ -1545,6 +1619,8 @@ bool BTView::UpdateBTCallInfo(T_APP_MSG* msg)
 			}
 			break;
         case BTCALL_STATE_PRORESS:
+		case BTCALL_STATE_HOLD:
+        case BTCALL_STATE_PARTIALHOLD:
 			pUIMgr->GetUIAnalysisObj()->ShowItem(UIID_WNDID_BT_PHONE,UIID_BT_COMECALL_ALL,false);
 			pUIMgr->GetUIAnalysisObj()->ShowItem(UIID_WNDID_BT_PHONE,UIID_BT_ONDIALING_ALL,false);
 			pUIMgr->GetUIAnalysisObj()->ShowItem(UIID_WNDID_BT_PHONE,UIID_BT_ONDIALING_END,false);

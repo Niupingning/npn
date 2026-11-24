@@ -72,6 +72,9 @@ public:
 
 	void SaveBTPhoneInfo(const T_STR_BT_CALLERINFO *tBTCall);
 	void GetBTPhoneInfo(T_STR_BT_CALLERINFO &tBTCall);
+	void SaveBTPhoneCallState(const int nState);
+	int  GetBTPhoneCallState();
+	void ClearBTPhoneCallInfo();                    // 清空当前通话人信息
 	//通话状态
 
 	void SaveBTPhoneSyncInfo(const T_STR_BT_SYNCINFO *tBTPhoneInfo);
@@ -136,6 +139,7 @@ private:
 private:
 	BtMusicInfo_t m_tBTMusic;
 	T_STR_BT_CALLERINFO m_tBTCall;
+	int m_BTCallState;          // 最近一次"已确认"的通话状态
 	T_STR_BT_SYNCINFO m_tBTPhoneInfo;
 	T_STR_ONCLICK_INFO m_tOnClickInfo;
 	BTPairingRegInfo_t m_BtPairingReq;

@@ -77,6 +77,8 @@ public:
 
 	void OnBtMusic_WinShow();
 	void OnBtCall_WinShow();
+	void ResetCallUI();            // 通话界面与状态整体复位
+	void HideAllCallPages();       // 三个整页通话分组互斥
 	void OnNeed_Pause();
 	void OnNeed_Play();
 private:

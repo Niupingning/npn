@@ -246,10 +246,37 @@ bool BTDataPacket::HandleWirelessSerData(T_STR_DATA_PACKET tPacket, T_APP_MSG& m
 				LOGDBG("Name = %s", tBTCallinfo->Name);
 				LOGDBG("FName = %s", tBTCallinfo->FName);
 				LOGDBG("nState = %d", tBTCallinfo->nState);
-				msg.Message = METER_VMSG_BT_PHONE_INFO;
-				msg.Param0 = tBTCallinfo->nState;
 
+				int  nPrevState = mData.GetBTPhoneCallState();
+
+				// 当前已经"占着"界面：响铃(1)/拨号中(2)/通话中(3)/保持(4)/部分保持(5)
+				bool bBusyCall  = (nPrevState == BTCALL_STATE_INCOMING    ||
+								   nPrevState == BTCALL_STATE_OUTGOING    ||
+								   nPrevState == BTCALL_STATE_PRORESS     ||
+								   nPrevState == BTCALL_STATE_HOLD        ||
+								   nPrevState == BTCALL_STATE_PARTIALHOLD);
+
+				// 又来了一个"电话事件"：来电(1)/保持(4)/部分保持(5)
+				bool bNewCall   = (tBTCallinfo->nState == BTCALL_STATE_INCOMING    ||
+								   tBTCallinfo->nState == BTCALL_STATE_HOLD        ||
+								   tBTCallinfo->nState == BTCALL_STATE_PARTIALHOLD);
+
+				if(bBusyCall && bNewCall)
+				{
+					LOGDBG("call waiting ignored, prevState=%d, newState=%d, name=%s, num=%s",
+							nPrevState, tBTCallinfo->nState,
+							tBTCallinfo->Name, tBTCallinfo->PhoneNum);
+
+					msg.Message = METER_VMSG_BT_PHONE_INFO;
+					msg.Param0  = tBTCallinfo->nState;
+					bRet = true;
+					break;
+				}
+
+				mData.SaveBTPhoneCallState(tBTCallinfo->nState);
 				mData.SaveBTPhoneInfo(tBTCallinfo);
+				msg.Message = METER_VMSG_BT_PHONE_INFO;
+				msg.Param0  = tBTCallinfo->nState;
 				bRet = true;
 			}
 			break;
