@@ -474,7 +474,6 @@ void HomeView::HomeUpdateHomeContenInfo(const int nCtrlId, const int nBtStat, co
 					((IVIView*)GetViewBase())->Save_CurSource(IVI_SOURCE_AVM);
 				}
 
-				m_ViewController->AVM_InitDispWin();
 				//((IVIView*)GetViewBase())->SetWindow_BK(UIID_WNDID_AVM,11);
 				//m_ViewController->SetSystem_AVMSetting(1,0,0); //发给MCU打开AVM
 				//m_ViewController->AVM_StreamOn();   //AVM
@@ -482,15 +481,15 @@ void HomeView::HomeUpdateHomeContenInfo(const int nCtrlId, const int nBtStat, co
 				if(!m_bAvmStart)
 				{
 					KillTimer(TIMERID_AVM_SIGN);
-					SetTimer(TIMERID_AVM_SIGN,8000);
+					SetTimer(TIMERID_AVM_SIGN,2000);
 					m_bAvmStart = true;
 					OnStart_AVM();
 				}
 				else
 				{
 					KillTimer(TIMERID_AVM_SIGN);
-					SetTimer(TIMERID_AVM_SIGN,200);
-					OnStartAvm_View(m_nCurAVM_View);
+					SetTimer(TIMERID_AVM_SIGN,1000);
+					OnStartAvm_View(1);
 				}
 			}
 			
@@ -552,13 +551,21 @@ void HomeView::OnStartAvm_View(int nView)
 {
 	if(0 == nView)
 	{
-		((IVIView*)GetViewBase())->SetWindow_BK(UIID_WNDID_AVM,243);
+		((IVIView*)GetViewBase())->SetWindow_BK(UIID_WNDID_AVM,11);
 	}
-	char view_cmd[128] = {0};
-	char shell_path[] = {"/application/bin/avm_view.sh"};
-	sprintf(view_cmd,"%s -a %d &",shell_path,nView);
-	LOGDBG("&&&---view_cmd:%s",view_cmd);
-	system(view_cmd);
+	//char view_cmd[128] = {0};
+	//char shell_path[] = {"/application/bin/avm_view.sh"};
+	//sprintf(view_cmd,"%s -a %d &",shell_path,nView);
+	//LOGDBG("&&&---view_cmd:%s",view_cmd);
+	//system(view_cmd);
+	if(0 == nView)
+	{
+		system("echo -n 0 > /media/flash/userdata/xcb/avm_sts");
+	}
+	else if(1 == nView)
+	{
+		system("echo -n 1 > /media/flash/userdata/xcb/avm_sts");
+	}
 }
 
 void HomeView::OnStart_AVM()

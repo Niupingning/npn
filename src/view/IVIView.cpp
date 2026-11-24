@@ -500,6 +500,7 @@ void IVIView::OnClick(CUIWndMng* pUI, long nWndId, long nCtrlId, int nBtState)
 
 					m_HomeView.OnStartAvm_View(0);
 				}
+				/*
 				else if(UIID_AVM_3D == nCtrlId)
 				{
 					m_HomeView.Set_AvmViewID(1);
@@ -524,7 +525,7 @@ void IVIView::OnClick(CUIWndMng* pUI, long nWndId, long nCtrlId, int nBtState)
 				{
 					m_HomeView.Set_AvmViewID(5);
 					m_HomeView.OnStartAvm_View(5);
-				}
+				}*/
 			}
 		}
 		break;
@@ -1396,8 +1397,8 @@ void IVIView::OnHandle_Source(int nSource)
 		case IVI_SOURCE_MEDIA:
 		{
 			SendMedia_Pause();
-			SetWindow_BK(UIID_WNDID_BLACK,243);
-			SetWindow_BK(UIID_WNDID_AVM,243);
+			SetWindow_BK(UIID_WNDID_BLACK,236);
+			SetWindow_BK(UIID_WNDID_AVM,236);
 		}
 		break;
 		case IVI_SOURCE_BT_MUSIC:
@@ -1411,14 +1412,14 @@ void IVIView::OnHandle_Source(int nSource)
 			m_ViewController->SendAndroidautoData(APP_APPSERVICE_OPENAA_TYPE,0);
 			m_ViewController->SendCarPlayData(APP_APPSERVICE_OPENCARPLAY_TYPE,0);
 
-			SetWindow_BK(UIID_WNDID_AVM,243);
+			SetWindow_BK(UIID_WNDID_AVM,236);
 		}
 		break;
 		case IVI_SOURCE_AVM:
 		{
 			//通知AVM停止输出视频流
 			m_ViewController->AVM_StreamOff();
-			SetWindow_BK(UIID_WNDID_BLACK,243);
+			SetWindow_BK(UIID_WNDID_BLACK,236);
 		}
 		break;
 		default:
