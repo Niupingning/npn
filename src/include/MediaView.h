@@ -81,6 +81,8 @@ public:
 
 	void OnNeed_Pause();
 
+	void OnNeed_PauseVideo();
+
 	void OnPlay_Seek(int nPlayType);
 
 	void VideoPlayTool_ShowHide();

@@ -6,6 +6,7 @@
  */
 
 #include "IVIView.h"
+#include "SPDisplay.h"
 #include "UIID_Def_Home.h"
 #include "UIID_Def_Setting.h"
 #include "UIID_Def_Radio.h"
@@ -29,6 +30,7 @@ using FY_NAMESPACE::CLOSE_FORYOUAPP;
 using FY_NAMESPACE::CUIWndMgrWrapper;
 using FY_NAMESPACE::LAUNCH_FORYOUAPP;
 using std::make_pair;
+using namespace dispctrl;
 
 int g_nPicArry[11] = {50,51,52,53,54,55,56,57,58,59,60};
 
@@ -692,6 +694,12 @@ void IVIView::OnSplitScreenChange(int nSplit, int nAppType)
 
 	if (nAppType == nAppStatus)
 	{
+		if (1 == nSplit)
+		{
+			// 分屏前先把 USB 视频停掉，分屏里不显示视频
+			m_MediaView.OnNeed_PauseVideo();
+		}
+
 		ShowSplitWnd(1 == nSplit);
 		
 		if (nSplit)
@@ -1266,6 +1274,18 @@ void IVIView::SendMedia_Pause()
 	m_MediaView.OnNeed_Pause();
 }
 
+void IVIView::SetVideoLayerVisible(bool bVisible)
+{
+	SPDispControl *pDisp = SPDispControl::GetInstance();
+	if (NULL == pDisp)
+	{
+		LOGDBG("SetVideoLayerVisible: pDisp is NULL");
+		return;
+	}
+	pDisp->DispSrv_SetAppLayerVisible("fileplay", bVisible);
+	LOGDBG("SetVideoLayerVisible fileplay=%d", (int)bVisible);
+}
+
 void IVIView::SendBtAudio_Pause()
 {
 	m_BTPhoneView.OnNeed_Pause();
@@ -1280,6 +1300,7 @@ void IVIView::ShowSplitWnd(bool bSplit)
 	LOGFILE("ShowSplitWnd bSplit=%d curWnd=%ld", bSplit, nCurWnd);
     if (bSplit)
     {
+		SetVideoLayerVisible(false);
 		if ((NULL != pUI) && (UIID_WNDID_SPLIT != pUI->GetCurWndID()))
 		{
 			ShowWnd(UIID_WNDID_SPLIT, false);
@@ -1304,6 +1325,7 @@ void IVIView::ShowSplitWnd(bool bSplit)
     {
         ShowWnd(UIID_WNDID_SPLIT, false);
         ShowWnd(UIID_WNDID_BLACK, true);
+		SetVideoLayerVisible(true);
         DrawAllItem();
 
         // 退出分屏，停掉补画和看护
@@ -1346,6 +1368,7 @@ void IVIView::CloseSplitWnd()
 
 	ShowWnd(UIID_WNDID_SPLIT, false);   // 先藏分屏
 	ShowWnd(UIID_WNDID_MAIN, true);     // 回主界面，顺带盖掉卡片残影
+	SetVideoLayerVisible(true);
 	DrawAllItem();
 
 	m_bClosingSplit = false;

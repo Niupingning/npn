@@ -97,6 +97,7 @@ public:
 	int CalculateWeekday(int year, int month, int day);
 
 	void SendMedia_Pause();
+	void SetVideoLayerVisible(bool bVisible);
 	void SetWindow_BK(int nWnd,int nPicId);
 
 	void Save_CurSource(int nSource);

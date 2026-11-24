@@ -1859,6 +1859,19 @@ void MediaView::OnNeed_Pause()
 	}
 }
 
+void MediaView::OnNeed_PauseVideo()
+{
+	LOGDBG("&&&---OnNeed_PauseVideo type:%d status:%d", m_nCurPlayType, m_nCurPlayStatus);
+
+	if(PLAY_TYPE_VIDEO == m_nCurPlayType)
+	{
+		if(Player_Play == m_nCurPlayStatus)
+		{
+			OnHandle_PlayPause_Video(Player_Pause);
+		}
+	}
+}
+
 void MediaView::OnPlay_Seek(int nPlayType)
 {
 	CUIWndMgrWrapper *pUIMgr = GetViewBase()->GetUIWndMgrWrapper();

@@ -109,6 +109,7 @@ bool HomeView::Update_CP_Show(T_APP_MSG* msg)
 			GetViewBase()->ShowWnd(nCurWnd, true);
 		}
 
+		((IVIView*)GetViewBase())->SetVideoLayerVisible(true);
 		KillTimer(TIMERID_CPAA_SIGN);
 	}
 	else if(UIID_WNDID_BLACK == msg->Param0)
