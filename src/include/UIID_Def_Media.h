@@ -27,6 +27,7 @@ const int UUID_PLAY_PLAY   = 1010;
 const int UUID_PLAY_NEXT   = 1011;
 const int UUID_PLAY_MODE   = 1012;
 const int UUID_PLAY_SHUFFLE   = 1013;
+const int UUID_PLAY_SINGLE    = 2205;
 const int UUID_PLAY_NO   = 1015;
 const int UUID_PLAY_TIME   = 1016;
 const int UUID_PLAY_TOTALTIME   = 1017;

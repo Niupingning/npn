@@ -1598,18 +1598,10 @@ void MediaView::OnClick_AudioPlayWnd(const int nCtrlId, const int nBtStat, const
 		}
 		break;
 		case UUID_PLAY_MODE:
-		{
-			//play mode：列表循环 → 单曲循环 → 文件夹循环 → 列表循环
-			int nNext = PLAY_MODE_NORMAL;
-			if(PLAY_MODE_NORMAL == m_nPlayMode)      nNext = PLAY_MODE_ONE;
-			else if(PLAY_MODE_ONE == m_nPlayMode)    nNext = PLAY_MODE_FOLDER;
-			else if(PLAY_MODE_FOLDER == m_nPlayMode) nNext = PLAY_MODE_NORMAL;
-			SetPlayMode(nNext, false);
-		}
-		break;
+		case UUID_PLAY_SINGLE:
 		case UUID_PLAY_SHUFFLE:
 		{
-			SetPlayMode(m_nPlayMode, !m_bPlayShuffle);
+			OnPlayMode_Next();
 		}
 		break;
 		case UUID_PLAY_SOURCE:
@@ -2086,6 +2078,47 @@ void MediaView::OnPlay_Prev_Video()
 	}
 }
 
+void MediaView::OnPlayMode_Next()
+{
+	int nMode = PLAY_MODE_NORMAL;
+	if(m_bPlayShuffle)
+	{
+		nMode = PLAY_MODE_SHUFFLE;
+	}
+	else if(PLAY_MODE_ONE == m_nPlayMode)
+	{
+		nMode = PLAY_MODE_ONE;
+	}
+
+	//轮转顺序：列表循环 → 随机 → 单曲循环 → 列表循环
+	int nNext = PLAY_MODE_NORMAL;
+	if(PLAY_MODE_NORMAL == nMode)
+	{
+		nNext = PLAY_MODE_SHUFFLE;
+	}
+	else if(PLAY_MODE_SHUFFLE == nMode)
+	{
+		nNext = PLAY_MODE_ONE;
+	}
+	else
+	{
+		nNext = PLAY_MODE_NORMAL;
+	}
+
+	if(PLAY_MODE_SHUFFLE == nNext)
+	{
+		m_nPlayMode    = PLAY_MODE_NORMAL;
+		m_bPlayShuffle = true;
+	}
+	else
+	{
+		m_nPlayMode    = nNext;
+		m_bPlayShuffle = false;
+	}
+
+	OnUpdateUI_PlayMode(m_nPlayMode);
+}
+
 void MediaView::OnUpdateUI_PlayMode(int nPlayMode)
 {
 	CUIWndMgrWrapper *pUIMgr = GetViewBase()->GetUIWndMgrWrapper();
@@ -2095,50 +2128,58 @@ void MediaView::OnUpdateUI_PlayMode(int nPlayMode)
 		return;
 	}
 
-	int nPicID = 0;
-	int nPicID_Dn = 0;
-	int nPicID_Fs = 0;
-
-	if(PLAY_MODE_NORMAL == nPlayMode)
+	CUIAnalysis *pUI = pUIMgr->GetUIAnalysisObj();
+	if (NULL == pUI)
 	{
-		nPicID = 220;
-		nPicID_Dn = 221;
-		nPicID_Fs = 220;
-	}
-	else if(PLAY_MODE_ONE == nPlayMode)
-	{
-		nPicID = 224;
-		nPicID_Dn = 225;
-		nPicID_Fs = 224;
-	}
-	else if(PLAY_MODE_FOLDER == nPlayMode)
-	{
-		//文件夹循环暂用列表循环图标
-		nPicID = 220;
-		nPicID_Dn = 221;
-		nPicID_Fs = 220;
+		LOGDBG("nullptr == pUI Error!!");
+		return;
 	}
 
-	pUIMgr->GetUIAnalysisObj()->SetItemIcon(UIID_WNDID_MEDIA_AUDIO_PLAY,UUID_PLAY_MODE,nPicID,ITEM_STATE_NORMAL);
-	pUIMgr->GetUIAnalysisObj()->SetItemIcon(UIID_WNDID_MEDIA_AUDIO_PLAY,UUID_PLAY_MODE,nPicID_Dn,ITEM_STATE_PUSH);
-	pUIMgr->GetUIAnalysisObj()->SetItemIcon(UIID_WNDID_MEDIA_AUDIO_PLAY,UUID_PLAY_MODE,nPicID_Fs,ITEM_STATE_SELECTED);
+	/* 1012 列表循环：正常220 按下221 选中222 失效223 */
+	pUI->SetItemIcon(UIID_WNDID_MEDIA_AUDIO_PLAY, UUID_PLAY_MODE, 220, ITEM_STATE_NORMAL);
+	pUI->SetItemIcon(UIID_WNDID_MEDIA_AUDIO_PLAY, UUID_PLAY_MODE, 221, ITEM_STATE_PUSH);
+	pUI->SetItemIcon(UIID_WNDID_MEDIA_AUDIO_PLAY, UUID_PLAY_MODE, 222, ITEM_STATE_SELECTED);
+	pUI->SetItemIcon(UIID_WNDID_MEDIA_AUDIO_PLAY, UUID_PLAY_MODE, 223, ITEM_STATE_DISABLE);
+
+	/* 1013 随机：正常232 按下233 选中234 失效235 */
+	pUI->SetItemIcon(UIID_WNDID_MEDIA_AUDIO_PLAY, UUID_PLAY_SHUFFLE, 232, ITEM_STATE_NORMAL);
+	pUI->SetItemIcon(UIID_WNDID_MEDIA_AUDIO_PLAY, UUID_PLAY_SHUFFLE, 233, ITEM_STATE_PUSH);
+	pUI->SetItemIcon(UIID_WNDID_MEDIA_AUDIO_PLAY, UUID_PLAY_SHUFFLE, 234, ITEM_STATE_SELECTED);
+	pUI->SetItemIcon(UIID_WNDID_MEDIA_AUDIO_PLAY, UUID_PLAY_SHUFFLE, 235, ITEM_STATE_DISABLE);
+
+	/* 2205 单曲循环：正常2268 按下2269 选中2270 失效2271 */
+	pUI->SetItemIcon(UIID_WNDID_MEDIA_AUDIO_PLAY, UUID_PLAY_SINGLE, 2268, ITEM_STATE_NORMAL);
+	pUI->SetItemIcon(UIID_WNDID_MEDIA_AUDIO_PLAY, UUID_PLAY_SINGLE, 2269, ITEM_STATE_PUSH);
+	pUI->SetItemIcon(UIID_WNDID_MEDIA_AUDIO_PLAY, UUID_PLAY_SINGLE, 2270, ITEM_STATE_SELECTED);
+	pUI->SetItemIcon(UIID_WNDID_MEDIA_AUDIO_PLAY, UUID_PLAY_SINGLE, 2271, ITEM_STATE_DISABLE);
+
+	//三个元件坐标完全重合(596,158,108x108)：同一时刻只显示一个
+	BOOL bShowMode    = FALSE;
+	BOOL bShowSingle  = FALSE;
+	BOOL bShowShuffle = FALSE;
 
 	if(m_bPlayShuffle)
 	{
-		pUIMgr->GetUIAnalysisObj()->SetItemState(UIID_WNDID_MEDIA_AUDIO_PLAY,UUID_PLAY_MODE,ITEM_STATE_NORMAL);
-
-		pUIMgr->GetUIAnalysisObj()->SetItemIcon(UIID_WNDID_MEDIA_AUDIO_PLAY,UUID_PLAY_SHUFFLE,234,ITEM_STATE_NORMAL);
-
-		pUIMgr->GetUIAnalysisObj()->SetItemState(UIID_WNDID_MEDIA_AUDIO_PLAY,UUID_PLAY_SHUFFLE,ITEM_STATE_SELECTED);
+		bShowShuffle = TRUE;                        //随机
+	}
+	else if(PLAY_MODE_ONE == nPlayMode)
+	{
+		bShowSingle  = TRUE;                        //单曲循环
 	}
 	else
 	{
-		pUIMgr->GetUIAnalysisObj()->SetItemState(UIID_WNDID_MEDIA_AUDIO_PLAY,UUID_PLAY_MODE,ITEM_STATE_SELECTED);
-
-		pUIMgr->GetUIAnalysisObj()->SetItemIcon(UIID_WNDID_MEDIA_AUDIO_PLAY,UUID_PLAY_SHUFFLE,232,ITEM_STATE_NORMAL);
-
-		pUIMgr->GetUIAnalysisObj()->SetItemState(UIID_WNDID_MEDIA_AUDIO_PLAY,UUID_PLAY_SHUFFLE,ITEM_STATE_NORMAL);
+		bShowMode    = TRUE;                        //列表循环
 	}
+
+	pUI->ShowItem(UIID_WNDID_MEDIA_AUDIO_PLAY, UUID_PLAY_MODE,    bShowMode);
+	pUI->ShowItem(UIID_WNDID_MEDIA_AUDIO_PLAY, UUID_PLAY_SINGLE,  bShowSingle);
+	pUI->ShowItem(UIID_WNDID_MEDIA_AUDIO_PLAY, UUID_PLAY_SHUFFLE, bShowShuffle);
+
+	//隐藏的两个同时禁用，防止它们还参与点击命中、把点击吃掉
+	pUI->EnableItem(UIID_WNDID_MEDIA_AUDIO_PLAY, UUID_PLAY_MODE,    bShowMode);
+	pUI->EnableItem(UIID_WNDID_MEDIA_AUDIO_PLAY, UUID_PLAY_SINGLE,  bShowSingle);
+	pUI->EnableItem(UIID_WNDID_MEDIA_AUDIO_PLAY, UUID_PLAY_SHUFFLE, bShowShuffle);
+
 	((IVIView*)GetViewBase())->UpdateSplitMediaView();
 }
 

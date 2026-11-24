@@ -129,6 +129,7 @@ private:
 
 	void OnPlay_Next();
 	void OnPlay_Prev();
+	void OnPlayMode_Next();
 
 	void OnUpdateUI_PlayMode(int nPlayMode);
 
