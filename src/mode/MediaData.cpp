@@ -109,9 +109,21 @@ int MediaData::GetLastWnd()
 void MediaData::SetMountPath(const char *pMount,int nLen)
 {
     Lock();
-    if(NULL != pMount)
+    if((NULL == pMount) || (nLen <= 0))
     {
-        memcpy(m_strMountPath,pMount,nLen);
+        //拔盘/无效路径：整块清空，避免残留的旧挂载路径把“已拔出”判成“已挂载”
+        memset(m_strMountPath, 0, sizeof(m_strMountPath));
+    }
+    else
+    {
+        int nCopy = nLen;
+        if(nCopy >= (int)sizeof(m_strMountPath))
+        {
+            nCopy = (int)sizeof(m_strMountPath) - 1;
+        }
+        memset(m_strMountPath, 0, sizeof(m_strMountPath));
+        memcpy(m_strMountPath, pMount, nCopy);
+        m_strMountPath[nCopy] = '\0';
     }
     UnLock();
 }
@@ -129,9 +141,10 @@ void MediaData::GetMountPath(char *pMount,int nLen)
 void MediaData::SetCurPlayUrl(const char *pPlayUrl)
 {
     Lock();
-    if(NULL != pPlayUrl)
+    memset(m_strPlayUrl, 0, sizeof(m_strPlayUrl));
+    if((NULL != pPlayUrl) && ('\0' != pPlayUrl[0]))
     {
-        memcpy(m_strPlayUrl,pPlayUrl,MAX_FILE_LEN);
+        strncpy(m_strPlayUrl, pPlayUrl, sizeof(m_strPlayUrl) - 1);
     }
     UnLock();
 }

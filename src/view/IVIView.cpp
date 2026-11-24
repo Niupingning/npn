@@ -313,6 +313,7 @@ bool IVIView::OnUserMessage(T_APP_MSG *msg)
 			{
 				OnHide_DemoView();
 			}
+			m_SplitView.SplitSetUsbMount(msg->Param0);  //分屏不在前台也要同步挂载状态
 			m_HomeView.HomeOnUserMessage(msg);
 			m_MediaView.MediaOnUserMessage(msg);
 		}
@@ -1453,6 +1454,12 @@ void IVIView::OnHandle_Source(int nSource)
 void IVIView::UpdateSplitMediaView()
 {
 	m_SplitView.SplitRefreshMedia();
+}
+
+void IVIView::OnUsbMediaScanFinish()
+{
+	//扫描完成后如果用户正停在分屏 USB 页，自动起播并刷新卡片
+	m_SplitView.SplitTryAutoPlayUsb();
 }
 
 void IVIView::OnTimer_DemoView()

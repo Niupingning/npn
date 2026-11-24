@@ -92,17 +92,22 @@ void MediaDataPacket::ParseDataPacket(T_STR_DATA_PACKET tPacket)
 			{
 				if(0 == tPacket.nParam1)
 				{
-					//移除U盘
+					mData.SetMountPath(NULL, 0);
+
 					nMsg.Message = SYS_VMSG_USBMOUNT;
 					nMsg.Param0 = 0;
 				}
 				else if(1 == tPacket.nParam1)
 				{
-					//插入U盘
 					char tmpMount[128] = {0};
-					memcpy(tmpMount,tPacket.Buf,tPacket.nLen);
+					int nMountLen = tPacket.nLen;
+					if(nMountLen >= (int)sizeof(tmpMount))
+					{
+						nMountLen = (int)sizeof(tmpMount) - 1;
+					}
+					memcpy(tmpMount, tPacket.Buf, nMountLen);
 
-					mData.SetMountPath(tmpMount,tPacket.nLen);
+					mData.SetMountPath(tmpMount, nMountLen);
 
 					nMsg.Message = SYS_VMSG_USBMOUNT;
 					nMsg.Param0 = 1;

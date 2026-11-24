@@ -42,6 +42,8 @@ MediaView::MediaView(ViewBase* p_ViewBase)
 	m_nCurUIfrome = UI_FROM_IDLE;
 	m_bLoadFinish = false;
 	m_nUsbInsert = 0;
+	m_bUsbStatusKnown = false;
+	m_nUsbProbeTry = 0;
 
 	m_nPlayAudio_pos = 0;
 	m_nPlayVideo_pos = 0;
@@ -221,18 +223,42 @@ bool MediaView::OnHandle_Mount(T_APP_MSG* msg)
 		m_FileList.DelFileList();
 
 		m_nUsbInsert = 0;
+		m_bUsbStatusKnown = true;
 
 		m_bVideoList_Update = false;
 		m_bAudioList_Update = false;
 
 		T_PLAYMEDIA_CMD tmpCmd;
+		memset(&tmpCmd, 0, sizeof(T_PLAYMEDIA_CMD));
 		tmpCmd.nPlayCmd = PLAY_CMD_STOP;
 		tmpCmd.nParam = 0;
 		m_ViewController->SetMediaPlay_Cmd(tmpCmd);
 
 		m_bLoadFinish = false;
 
-		GetViewBase()->ShowWnd(UIID_WNDID_MAIN, true);
+		//拔盘后清空白状态：避免分屏/USB 卡片继续显示上一首歌、旧进度和播放图标
+		m_nCurPlayStatus   = Player_Idle;
+		m_nCurPlayType     = PLAY_TYPE_IDLE;
+		m_nCurUIfrome      = UI_FROM_IDLE;
+		m_nPlayAudio_pos   = 0;
+		m_nPlayAuido_Total = 0;
+		m_nPlayVideo_pos   = 0;
+		m_nPlayVideo_Total = 0;
+		m_bAudioEndHandled = false;
+		m_bVideoEndHandled = false;
+		memset(m_strPlayTitle,  0, sizeof(m_strPlayTitle));
+		memset(m_strPlayArtist, 0, sizeof(m_strPlayArtist));
+		memset(m_strPlayAlbum,  0, sizeof(m_strPlayAlbum));
+		memset(m_PrePlayAudioUrl, 0, sizeof(m_PrePlayAudioUrl));
+
+		//连内部记录的“当前播放路径”一起清掉，避免服务端停播后又上报旧路径时触发误解析/无效切歌
+		MediaData::GetInstance().SetCurPlayUrl(NULL);
+
+		//只有当前停在媒体页时才回主界面；停在分屏时不能跳窗，否则分屏会被盖掉
+		if(bInMediaWnd)
+		{
+			GetViewBase()->ShowWnd(UIID_WNDID_MAIN, true);
+		}
 	}
 	else if(1 == msg->Param0)
 	{
@@ -240,14 +266,7 @@ bool MediaView::OnHandle_Mount(T_APP_MSG* msg)
 		m_FileList.DelFileList();
 
 		m_nUsbInsert = 1;
-
-		//MediaData &mData = MediaData::GetInstance();
-		//char strMount[128] = {0};
-		//mData.GetMountPath(strMount,128);
-
-		//LOGDBG("&&&---OnHandle_Mount--strMount:%s\n",strMount);
-		//search files
-		//m_FileList.Search_AllDirectory(strMount);
+		m_bUsbStatusKnown = true;
 
 		if ((bInMediaWnd) || (UIID_WNDID_MAIN == nCurWnd))
 		{
@@ -1053,10 +1072,26 @@ void MediaView::OnTimer(uint32_t id)
 
 			m_FileList.Search_AllDirectory(strMount);
 			m_bLoadFinish = true;
+
+			//扫描完成后：若当前正停在分屏 USB 页，按预期自动开始播放并刷新卡片
+			((IVIView*)GetViewBase())->OnUsbMediaScanFinish();
 			break;
 		}
 		case TIMER_UPDATE_TIME:
 		{
+			//开机前就插着U盘时，MCU 不会补发挂载上报；这里主动补查一次（最多重试 5 次）
+			if((!m_bUsbStatusKnown) && (m_nUsbProbeTry < 5) && (NULL != m_ViewController))
+			{
+				int nMounted = 0;
+				m_nUsbProbeTry++;
+
+				if(m_ViewController->Query_UsbStatus(nMounted))
+				{
+					//服务已应答：结果会以 SYS_VMSG_USBMOUNT 走正常消息通路回来
+					LOGDBG("usb probe done, mounted=%d", nMounted);
+				}
+			}
+
 			OnViewDetect();
 			break;
 		}

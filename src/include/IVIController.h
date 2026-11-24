@@ -149,6 +149,7 @@ public:
 	//media
 	bool SetMediaPlay_Url(T_PLAYMEDIA_URL &tPlayUrl);
 	bool SetMediaPlay_Cmd(T_PLAYMEDIA_CMD &tPlayCmd);
+	bool Query_UsbStatus(int &nMounted);   //主动向 system service 查一次 U盘挂载状态
 
 	bool SetSystem_AVMSetting(int nSwitch,int nPointX,int nPointY);
 

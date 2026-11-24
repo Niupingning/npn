@@ -98,6 +98,15 @@ public:
 	
 	int  GetUsbInsert(){ return m_nUsbInsert; }
 
+	//挂载状态是否已被上报/补查过
+	bool IsUsbStatusKnown(){ return m_bUsbStatusKnown; }
+	//U盘目录是否扫描完成
+	bool IsUsbScanFinished(){ return m_bLoadFinish; }
+	//U盘音频文件数量
+	int  GetUsbAudioFileNum(){ return m_FileList.GetAudioFileNum(); }
+	//当前播放状态（供分屏判断是否被用户手动暂停）
+	int  GetPlayStatus(){ return m_nCurPlayStatus; }
+
 	void GetPlayID3Info(wchar_t *pTitle, wchar_t *pArtist, wchar_t *pAlbum, int nLen);
 
 private:
@@ -166,6 +175,9 @@ private:
 	int m_nCurUIfrome;
 
 	int m_nUsbInsert;    //0:未插入U盘 1:插入U盘
+
+	bool m_bUsbStatusKnown; //是否已经拿到过 U 盘挂载状态（收到上报或补查成功）
+	int  m_nUsbProbeTry;    //启动补查重试次数
 
 	char m_PrePlayAudioUrl[MAX_FILE_LEN]; 
 	char m_PrePlayVideoUrl[MAX_FILE_LEN];

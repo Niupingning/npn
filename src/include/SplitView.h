@@ -15,6 +15,8 @@ public:
 	bool SplitOnUserMessage(T_APP_MSG* msg);
 	void SplitSwipe(int nDir);
 	void SplitRefreshMedia();   // 播放中由 MediaView 定时调用，刷新分屏媒体卡片
+	void SplitSetUsbMount(int nMount){ m_bUSBMounted = (1 == nMount); }  // 分屏不在前台也同步挂载状态
+	void SplitTryAutoPlayUsb(); // 分屏 USB 页：扫描完成/切入本页时起播
 
 private:
 	void SplitUpdateRadio();
@@ -32,5 +34,6 @@ private:
 	int  m_nCurPage;
 	bool m_bUSBMounted;   // U盘是否挂载
 	bool m_bPageInited;   // 是否已选过默认页，避免重绘/重挂窗口时重置用户滑动的页
+	bool SplitIsUsbPageVisible();
 };
 #endif

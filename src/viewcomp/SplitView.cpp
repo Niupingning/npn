@@ -18,12 +18,9 @@ void SplitView::SplitInitWorkWnd()
 {
 	// 进分屏时主动获取 U 盘真实挂载状态，避免初始 false 导致误显示 No Device
 	MediaView* pMedia = ((IVIView*)GetViewBase())->GetMediaView();
-	if (NULL != pMedia)
-	{
-		m_bUSBMounted = (1 == pMedia->GetUsbInsert());
-	}
-	// 如果 MediaView 还没刷新，用 MediaData 里的挂载路径判断
-	if (!m_bUSBMounted)
+	m_bUSBMounted = (NULL != pMedia) && (1 == pMedia->GetUsbInsert());
+
+	if ((NULL == pMedia) || (!pMedia->IsUsbStatusKnown()))
 	{
 		char szMount[128] = {0};
 		MediaData::GetInstance().GetMountPath(szMount, sizeof(szMount));
@@ -113,9 +110,22 @@ void SplitView::SplitSetPage(int nPage)
 
 	switch (nPage)
 	{
-		case SPLIT_PAGE_RADIO: SplitUpdateRadio();   break;
-		case SPLIT_PAGE_BT:    SplitUpdateBTMusic(); break;
-		case SPLIT_PAGE_USB:   SplitUpdateUSB();     break;
+		case SPLIT_PAGE_RADIO:
+		{
+			SplitUpdateRadio();
+		}
+		break;
+		case SPLIT_PAGE_BT:
+		{
+			SplitUpdateBTMusic();
+		}
+		break;
+		case SPLIT_PAGE_USB:
+		{
+			SplitUpdateUSB();
+			SplitTryAutoPlayUsb();
+		}
+		break;
 	}
 }
 
@@ -503,6 +513,38 @@ void SplitView::SplitUpdateUSB()
 	else if(PLAY_MODE_SHUFFLE == nMode) nPicLoop = 2245;    //随机
 
 	p->SetItemIcon(UIID_WNDID_SPLIT, UIID_SPLIT_MEDIA_LOOP, nPicLoop, ALL_STATE);
+}
+
+/* 分屏 USB 页是否正显示在最前面 */
+bool SplitView::SplitIsUsbPageVisible()
+{
+	CUIWndMgrWrapper *pUIMgr = GetViewBase()->GetUIWndMgrWrapper();
+	if (NULL == pUIMgr) return false;
+
+	return ((UIID_WNDID_SPLIT == pUIMgr->GetCurWndID()) && (SPLIT_PAGE_USB == m_nCurPage));
+}
+
+/* 分屏 USB 页：有盘、扫描完成、有音频文件时起播；
+   CP/AA 与 USB 的互斥由现有 AUD_RSC 资源仲裁负责，这里不额外抢占音源 */
+void SplitView::SplitTryAutoPlayUsb()
+{
+	if (!SplitIsUsbPageVisible()) return;
+	if (!m_bUSBMounted) return;
+
+	MediaView* pMedia = ((IVIView*)GetViewBase())->GetMediaView();
+	if (NULL == pMedia) return;
+	if (!pMedia->IsUsbScanFinished()) return;
+	if (pMedia->GetUsbAudioFileNum() <= 0) return;
+
+	//用户手动暂停或正在播时，窗口重绘/重抬不要再自动起播
+	int nStatus = pMedia->GetPlayStatus();
+	if((Player_Play == nStatus) || (Player_Pause == nStatus))
+	{
+		return;
+	}
+
+	pMedia->SetPlayPause(true);
+	SplitUpdateUSB();
 }
 
 /* 分屏媒体卡片跟随播放刷新：MediaView 每秒 tick 时调用 */

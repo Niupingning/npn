@@ -88,6 +88,7 @@ public:
 	void OnHandleKey(T_APP_MSG *msg);
 
 	void OnSplitScreenChange(int nSplit, int nAppType);
+	void OnUsbMediaScanFinish();   //U盘扫描完成：由 MediaView 调用，转发给分屏
 
 	void OnHandle_PopAudio(int nToWard);
 	void OnHideAudio_Pop();

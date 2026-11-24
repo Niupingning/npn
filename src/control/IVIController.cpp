@@ -914,6 +914,86 @@ bool IVIController::ReadSytemSerData(int nCmd)
 	return bRet;
 }
 
+/* 开机前就插着U盘时，服务不会补发挂载上报：主动 ReadData 查一次，并用可访问性复核 */
+bool IVIController::Query_UsbStatus(int &nMounted)
+{
+	nMounted = 0;
+
+	uint8_t Buf[MAX_DATA_LEN];
+	memset(Buf, 0, sizeof(Buf));
+	int nlen = 0;
+
+	m_SystemSrv = GetServerBinder(SYSTEM_SRV);
+	if(NULL == m_SystemSrv.get())
+	{
+		LOGERR("Query_UsbStatus: m_SystemSrv is null");
+		return false;
+	}
+
+	int nRet = m_SystemSrv->ReadData(MPU_SYSTEM_USB_STATUS, Buf, nlen);
+	LOGDBG("Query_UsbStatus nRet=%d nlen=%d", nRet, nlen);
+
+	if(nlen > 0)
+	{
+		//原始数据打一次，方便核对服务端返回的布局（不影响功能）
+		char szHex[3 * 33] = {0};
+		int nDump = (nlen > 32) ? 32 : nlen;
+		for(int i = 0; i < nDump; i++)
+		{
+			sprintf(szHex + i * 3, "%02X ", Buf[i]);
+		}
+		LOGDBG("Query_UsbStatus raw: %s", szHex);
+	}
+	else
+	{
+		return false;
+	}
+
+	//从返回 buffer 里取第一个 '/' 起的绝对路径，协议头字节不影响识别
+	char szMount[128] = {0};
+	int nStart = -1;
+	for(int i = 0; i < nlen; i++)
+	{
+		if('/' == (char)Buf[i])
+		{
+			nStart = i;
+			break;
+		}
+	}
+
+	if(nStart < 0)
+	{
+		LOGDBG("Query_UsbStatus: no mount path in reply");
+		return false;
+	}
+
+	int nPathLen = nlen - nStart;
+	if(nPathLen >= (int)sizeof(szMount))
+	{
+		nPathLen = (int)sizeof(szMount) - 1;
+	}
+	memcpy(szMount, &Buf[nStart], nPathLen);
+	szMount[nPathLen] = '\0';
+
+	//用文件系统可访问性复核，避免“服务里还留着路径但盘已拔掉”
+	nMounted = (0 == access(szMount, R_OK)) ? 1 : 0;
+
+	MediaData &mData = MediaData::GetInstance();
+	if(1 == nMounted)
+	{
+		mData.SetMountPath(szMount, (int)strlen(szMount));
+	}
+	else
+	{
+		mData.SetMountPath(NULL, 0);
+	}
+
+	//复用正常消息通路：主页媒体图标、MediaView、分屏都按同一套逻辑同步
+	SendViewMessage(SYS_VMSG_USBMOUNT, nMounted, 0, 0);
+
+	LOGDBG("Query_UsbStatus mount=%s mounted=%d", szMount, nMounted);
+	return true;
+}
 
 bool IVIController::ReadWirelessData(int nCmd)
 {
