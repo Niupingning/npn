@@ -724,7 +724,7 @@ void IVIView::OnHandleKey(T_APP_MSG *msg)
 
 	//按键操作状态 0:只有按键值 1:按下 2:弹出 3:长按
 	int nKeyStatus = msg->Param1;
-
+	LOGDBG("lcz---keyValue = %d , keyStatus = %d \n" , nKeyStatus , nKeyStatus);
 	if(1 == nKeyStatus)
 	{
 		//按下
@@ -753,6 +753,24 @@ void IVIView::OnHandleKey(T_APP_MSG *msg)
 			{
 				//音量-
 				OnHandle_PopAudio(0);
+			}
+			break;
+			case 18:
+			{
+				//音量+
+				OnHandle_PopAudio(1);
+			}
+			break;
+			case 19:
+			{
+				//音量-
+				OnHandle_PopAudio(0);
+			}
+			break;
+			case 21: // VR 按键
+			{
+				// 
+				// m_HomeView.HomeOnClick(nullptr, UIID_WNDID_MAIN, UIID_HOME_AVM, 1);
 			}
 			break;
 			default:
