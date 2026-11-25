@@ -177,6 +177,7 @@ int IVIView::CanBoxOnInit()
 
 void IVIView::ShowFirstWnd(std::string strParam)
 {
+	/*
 	if (access("/media/flash/userdata/speaker_mode", F_OK) == 0)
 	{
 		ShowWnd(UIID_WNDID_NETWORK_MODE, true);
@@ -184,7 +185,9 @@ void IVIView::ShowFirstWnd(std::string strParam)
 	else
 	{
 		ShowWnd(UIID_WNDID_MAIN, true);
-	}
+	}*/
+
+	showWnd(UIID_WNDID_MAIN, true);
 }
 
 bool IVIView::OnMouseMove(POINT point)
