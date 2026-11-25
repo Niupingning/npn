@@ -87,7 +87,9 @@ private:
 	bool Update_AA_Connet(T_APP_MSG* msg=nullptr);
 	bool Update_USB_Insert(T_APP_MSG* msg=NULL);
 
-	void RefreshCPAAIcons();          // CP/AA 图标按互斥规则统一重算
+	void RefreshCPAAIcons();          // CP/AA 图标各自独立重算（连接状态+有效性）
+	void StartLinkShowConfirm(int nLink);   // 点击互联后等待前台确认，超时收回（防黑屏）
+	bool Update_CPAA_RefreshIcon(T_APP_MSG* msg);   // 互联资源加载/释放时只重算图标
 	
 private:
 	IVIController * m_ViewController;
@@ -100,6 +102,7 @@ private:
 	bool m_bAvmStart;
 
 	int m_nCurAVM_View;
+	int m_nWaitShowLink;      // 0=无等待 1=等CP前台 2=等AA前台
 };
 
 #endif /* HOMEVIEW_H_ */

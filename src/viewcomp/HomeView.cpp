@@ -34,6 +34,11 @@ using std::make_pair;
 
 #define IMPERIAL_VALUE 0.621371192
 
+// 互联连接有效性校验开关：
+// 0 = 只记录日志，不拦截（第一次上车验证用，确认证据链有没有到）
+// 1 = 正式生效：只有“连接上报 + 会话证据”都成立才点亮图标
+#define CPAA_LINK_GATE_ENABLE 1
+
 HomeView::HomeView(ViewBase* p_ViewBase)
 : CompBase(p_ViewBase)
 , m_nCurrWnd(0)
@@ -46,6 +51,7 @@ HomeView::HomeView(ViewBase* p_ViewBase)
 	m_bAvmStart = false;
 
 	m_nCurAVM_View = 1;
+	m_nWaitShowLink = 0;
 }
 
 HomeView::~HomeView()
@@ -65,6 +71,8 @@ void HomeView::HomeInitUpdateMsgMap()
 	m_MsgMap.insert(make_pair(CARPLAY_VMSG_CONNECTSTATUS, &HomeView::Update_CP_Connet));
 	m_MsgMap.insert(make_pair(ANDRIOD_VMSG_CONNECTSTATUS, &HomeView::Update_AA_Connet));
 	m_MsgMap.insert(make_pair(SYS_VMSG_USBMOUNT, &HomeView::Update_USB_Insert));	
+	m_MsgMap.insert(make_pair(MOBILE_VMSG_MODILERESOURCE_LOAD_CPAA, &HomeView::Update_CPAA_RefreshIcon));
+	m_MsgMap.insert(make_pair(MOBILE_VMSG_MODILERESOURCE_RELEASE_CPAA, &HomeView::Update_CPAA_RefreshIcon));
 }
 
 void HomeView::HomeGetUpdateMessageMap(map<int, pUpdateMsg> &nMap)
@@ -143,6 +151,7 @@ bool HomeView::Update_CP_Show(T_APP_MSG* msg)
 
 	mData.GetINTData(INT_AASHOWSTATUS, nAAShowStatus);
 	*/
+	RefreshCPAAIcons();
 	return true;
 }
 
@@ -158,14 +167,22 @@ void HomeView::RefreshCPAAIcons()
 
 	int nCPConnectStatus = 0;
 	int nAAConnectStatus = 0;
+	int nCPValid = 0;
+	int nAAValid = 0;
 	mData.GetINTData(INT_CARPLAYCONNECTSTATUS, nCPConnectStatus);
 	mData.GetINTData(INT_ANDRIODCONNECTSTATUS, nAAConnectStatus);
+	mData.GetINTData(INT_CP_LINK_VALID, nCPValid);
+	mData.GetINTData(INT_AA_LINK_VALID, nAAValid);
 
-	LOGFILE("CPAAIcons CP=%d AA=%d", nCPConnectStatus, nAAConnectStatus);
+	LOGFILE("CPAAIcons CP=%d/%d AA=%d/%d", nCPConnectStatus, nCPValid, nAAConnectStatus, nAAValid);
 
-	// CP 与 AA 互斥：同一时刻只允许一个互联图标点亮
-	bool bCPOn = (1 == nCPConnectStatus) && (1 != nAAConnectStatus);
-	bool bAAOn = (1 == nAAConnectStatus) && (1 != nCPConnectStatus);
+	// 各自独立判定：连接上报==1 且 已收到会话证据，才算真连接
+	// CPAA_LINK_GATE_ENABLE==0 时退化为“只按连接上报”，用于第一轮验证
+	bool bCPValidOk = (1 == nCPValid) || (0 == CPAA_LINK_GATE_ENABLE);
+	bool bAAValidOk = (1 == nAAValid) || (0 == CPAA_LINK_GATE_ENABLE);
+
+	bool bCPOn = (1 == nCPConnectStatus) && bCPValidOk;
+	bool bAAOn = (1 == nAAConnectStatus) && bAAValidOk;
 
 	if (bCPOn)
 	{
@@ -208,7 +225,6 @@ bool HomeView::Update_CP_Connet(T_APP_MSG* msg)
 	LOGDBG("&&&&----nCPConnectStatus:%d",nCPConnectStatus);
 	LOGFILE("CPConn=%d", nCPConnectStatus);
 
-	// 统一按 CP/AA 互斥规则重算两个互联图标
 	RefreshCPAAIcons();
 
 	if (1 != nCPConnectStatus)
@@ -239,7 +255,6 @@ bool HomeView::Update_AA_Connet(T_APP_MSG* msg)
 
 	LOGDBG("&&&&----nAAConnectStatus:%d",nAAConnectStatus);
 
-	// 统一按 CP/AA 互斥规则重算两个互联图标
 	RefreshCPAAIcons();
 
 	if (1 != nAAConnectStatus)
@@ -378,6 +393,56 @@ void HomeView::OnTimer(uint32_t id)
 			((IVIView*)GetViewBase())->SetWindow_BK(UIID_WNDID_BLACK,11);			
 		}
 		break;
+		case TIMERID_CPAA_CONFIRM:
+		{
+			KillTimer(TIMERID_CPAA_CONFIRM);
+			HomeData &mData = HomeData::GetInstance();
+			IVIView *pView = (IVIView*)GetViewBase();
+			int nShow = 0;
+			bool bNeedBack = false;
+
+			if (APP_STATUS_AA == m_nWaitShowLink)
+			{
+				mData.GetINTData(INT_AASHOWSTATUS, nShow);
+				LOGFILE("AA show confirm timeout, show=%d", nShow);
+				if (1 != nShow)
+				{
+					mData.SaveINTData(INT_AA_LINK_VALID, 0);   // 只作废有效性，不动原始连接状态
+					bNeedBack = true;
+				}
+			}
+			else if (APP_STATUS_CP == m_nWaitShowLink)
+			{
+				mData.GetINTData(INT_CARPLAYSHOWSTATUS, nShow);
+				LOGFILE("CP show confirm timeout, show=%d", nShow);
+				if (1 != nShow)
+				{
+					mData.SaveINTData(INT_CP_LINK_VALID, 0);
+					bNeedBack = true;
+				}
+			}
+			else
+			{
+				LOGFILE("CPAA confirm timeout, link=0 (ignore)");
+			}
+
+			if (bNeedBack)
+			{
+				int nCurWnd = pView->GetCurrWnd();
+				LOGFILE("CPAA confirm fail, back to main curWnd=%d", nCurWnd);
+				// CloseSplitWnd 只在当前是分屏窗时才会动作，全屏黑屏要自己收
+				if ((UIID_WNDID_BLACK == nCurWnd) || (UIID_WNDID_SPLIT == nCurWnd))
+				{
+					GetViewBase()->ShowWnd(UIID_WNDID_SPLIT, false);
+					GetViewBase()->ShowWnd(UIID_WNDID_BLACK, false);
+					GetViewBase()->ShowWnd(UIID_WNDID_MAIN, true);
+					pView->SetVideoLayerVisible(true);
+				}
+				RefreshCPAAIcons();
+			}
+			m_nWaitShowLink = 0;
+		}
+		break;
 		default:
 		break;
 	}
@@ -500,13 +565,55 @@ void HomeView::HomeUpdateHomeContenInfo(const int nCtrlId, const int nBtStat, co
 		case UIID_HOME_AA:
 		{
 			//AA
+			if (NULL == m_ViewController)
+			{
+				LOGDBG("m_ViewController == NULL, drop AA click");
+				break;
+			}
+			int nRaw = 0;
+			int nValid = 0;
+			int nRes = 1;                       // 1=资源没加载 0=已加载
+			HomeData &mDataAA = HomeData::GetInstance();
+			mDataAA.GetINTData(INT_ANDRIODCONNECTSTATUS, nRaw);
+			mDataAA.GetINTData(INT_AA_LINK_VALID, nValid);
+			mDataAA.GetINTData(INT_MODILERESOURCE_AA, nRes);
+			if ((1 != nRaw)
+				|| ((0 != CPAA_LINK_GATE_ENABLE) && (1 != nValid))
+				|| ((0 != CPAA_LINK_GATE_ENABLE) && (0 != nRes)))
+			{
+				LOGFILE("AA click rejected raw=%d valid=%d res=%d", nRaw, nValid, nRes);
+				RefreshCPAAIcons();
+				break;
+			}
 			m_ViewController->SendAndroidautoData(APP_APPSERVICE_OPENAA_TYPE,1);
+			StartLinkShowConfirm(APP_STATUS_AA);
 		}
 		break;
 		case UIID_HOME_CP:
 		{
 			//CP
+			if (NULL == m_ViewController)
+			{
+				LOGDBG("m_ViewController == NULL, drop CP click");
+				break;
+			}
+			int nRaw = 0;
+			int nValid = 0;
+			int nRes = 1;                       // 1=资源没加载 0=已加载
+			HomeData &mDataCP = HomeData::GetInstance();
+			mDataCP.GetINTData(INT_CARPLAYCONNECTSTATUS, nRaw);
+			mDataCP.GetINTData(INT_CP_LINK_VALID, nValid);
+			mDataCP.GetINTData(INT_MODILERESOURCE_CP, nRes);
+			if ((1 != nRaw)
+				|| ((0 != CPAA_LINK_GATE_ENABLE) && (1 != nValid))
+				|| ((0 != CPAA_LINK_GATE_ENABLE) && (0 != nRes)))
+			{
+				LOGFILE("CP click rejected raw=%d valid=%d res=%d", nRaw, nValid, nRes);
+				RefreshCPAAIcons();
+				break;
+			}
 			m_ViewController->SendCarPlayData(APP_APPSERVICE_OPENCARPLAY_TYPE,1);
+			StartLinkShowConfirm(APP_STATUS_CP);
 		}
 		break;
 		case UIID_PUBLIC_SETTINGH_BIN:
@@ -541,6 +648,21 @@ void HomeView::HomeUpdateHomeContenInfo(const int nCtrlId, const int nBtStat, co
 		default:
 		break;
 	}
+}
+
+void HomeView::StartLinkShowConfirm(int nLink)
+{
+	m_nWaitShowLink = nLink;
+	KillTimer(TIMERID_CPAA_CONFIRM);
+	SetTimer(TIMERID_CPAA_CONFIRM, 5000);   // 5 秒收不到前台显示就撤回
+	LOGFILE("StartLinkShowConfirm link=%d", nLink);
+}
+
+bool HomeView::Update_CPAA_RefreshIcon(T_APP_MSG* msg)
+{
+	LOGFILE("CPAA refresh by msg=%d", (NULL != msg) ? msg->Message : -1);
+	RefreshCPAAIcons();
+	return true;
 }
 
 void HomeView::KillTimer_AvmShow()

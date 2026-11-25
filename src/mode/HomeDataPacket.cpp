@@ -1075,6 +1075,7 @@ bool HomeDataPacket::HandleCarPlayData(T_STR_DATA_PACKET tPacket, T_APP_MSG& msg
 					mView.SendResourceType(RESOERCE_TYPE_CP);
 					//下发收音机静音
 					m_pCtrl->SendMeterInfoData(RADIO_MUTE,0,0,0);	
+					MarkCPLinkValid("CP_SHOW");
 				}
 				
 				int nACCStutas = 1;
@@ -1105,6 +1106,23 @@ bool HomeDataPacket::HandleCarPlayData(T_STR_DATA_PACKET tPacket, T_APP_MSG& msg
 			if(tPacket.nLen > 0)
 			{
 				LOGDBG("SaveCarPlayConnectStatus:%d",tPacket.Buf[0]);
+
+				int nPrevCPValid = 0;
+				mData.GetINTData(INT_CP_LINK_VALID, nPrevCPValid);
+				if (1 == tPacket.Buf[0])
+				{
+					if (2 == nPrevCPValid)      // 正常时序：先 SHOW/PAAS，后 CONNECT
+					{
+						mData.SaveINTData(INT_CP_LINK_VALID, 1);
+						LOGDBG("CPLinkValid:1 by pending");
+					}
+				}
+				else
+				{
+					mData.SaveINTData(INT_CP_LINK_VALID, 0);
+					LOGDBG("CPLinkValid:0 reset, raw=%d", tPacket.Buf[0]);
+				}
+
 				mData.SaveINTData(INT_CARPLAYCONNECTSTATUS, tPacket.Buf[0]);
 				if(tPacket.Buf[0] != 1)
 				{
@@ -1128,6 +1146,7 @@ bool HomeDataPacket::HandleCarPlayData(T_STR_DATA_PACKET tPacket, T_APP_MSG& msg
 				{
 					//加载0 释放1
 					mData.SaveINTData(INT_MODILERESOURCE_CP,0);
+					MarkCPLinkValid("CP_PAAS_START");
 				}
 				msg.Message = MOBILE_VMSG_MODILERESOURCE_LOAD_CPAA;	
 				bRet = true;
@@ -1172,6 +1191,7 @@ bool HomeDataPacket::HandleCarPlayData(T_STR_DATA_PACKET tPacket, T_APP_MSG& msg
 				LOGDBG("CarplayMode:speechMode:%d",tPacket.Buf[4]);
 				LOGDBG("CarplayMode:navi:%d",tPacket.Buf[5]);
 				mData.SaveINTData(INT_CP_PHONE, tPacket.Buf[2]);
+				MarkCPLinkValid("CP_MODE");
 				if(tPacket.Buf[1] == 1)
 				{
 					mView.SendResourceType(RESOERCE_TYPE_CP);
@@ -1187,6 +1207,10 @@ bool HomeDataPacket::HandleCarPlayData(T_STR_DATA_PACKET tPacket, T_APP_MSG& msg
 			{
 				LOGDBG("CarplayMode:connect_ReAdy:%d",tPacket.Buf[0]);
 				mData.SaveINTData(INT_CP_CONNECT_REDAY_STATUS, tPacket.Buf[0]);
+				if (1 == tPacket.Buf[0])
+				{
+					MarkCPLinkValid("CP_READY");
+				}
 				bRet = true;
 			}
 			msg.Message = METER_VMSG_LASTCHARGE_INFO;
@@ -1277,6 +1301,7 @@ bool HomeDataPacket::HandleAndroidData(T_STR_DATA_PACKET tPacket, T_APP_MSG& msg
 					mView.SendResourceType(RESOERCE_TYPE_AA);
 					//下发收音机静音
 					m_pCtrl->SendMeterInfoData(RADIO_MUTE,0,0,0);	
+					MarkAALinkValid("AA_SHOW");
 				}
 
 				int nACCStutas = 1;
@@ -1306,6 +1331,23 @@ bool HomeDataPacket::HandleAndroidData(T_STR_DATA_PACKET tPacket, T_APP_MSG& msg
 			if(tPacket.nLen > 0)
 			{
 				LOGDBG("SaveAndriodStatus:%d",tPacket.Buf[0]);
+
+				int nPrevAAValid = 0;
+				mData.GetINTData(INT_AA_LINK_VALID, nPrevAAValid);
+				if (1 == tPacket.Buf[0])
+				{
+					if (2 == nPrevAAValid)      // 正常时序：先 AA_SHOW/PAAS，后 CONNECT
+					{
+						mData.SaveINTData(INT_AA_LINK_VALID, 1);
+						LOGDBG("AALinkValid:1 by pending");
+					}
+				}
+				else
+				{
+					mData.SaveINTData(INT_AA_LINK_VALID, 0);
+					LOGDBG("AALinkValid:0 reset, raw=%d", tPacket.Buf[0]);
+				}
+
 				mData.SaveINTData(INT_ANDRIODCONNECTSTATUS, tPacket.Buf[0]);
 				msg.Message = ANDRIOD_VMSG_CONNECTSTATUS;
 				m_pCtrl->SendWirelessInfoData(WIRELESS_CMD_SET_AA_ACTIVE_STATE,tPacket.Buf[0]);
@@ -1324,6 +1366,7 @@ bool HomeDataPacket::HandleAndroidData(T_STR_DATA_PACKET tPacket, T_APP_MSG& msg
 				{
 					//加载0 释放1
 					mData.SaveINTData(INT_MODILERESOURCE_AA,0);
+					MarkAALinkValid("AA_PAAS_START");
 				}
 				msg.Message = MOBILE_VMSG_MODILERESOURCE_LOAD_CPAA;	
 				bRet = true;
@@ -1389,6 +1432,7 @@ bool HomeDataPacket::HandleAndroidData(T_STR_DATA_PACKET tPacket, T_APP_MSG& msg
 				if(tPacket.Buf[0] == 1)
 				{
 					mView.SendResourceType(RESOERCE_TYPE_AA);
+					MarkAALinkValid("AA_AUDIO_SOURCE");
 				}
 			}
 			break;	
@@ -1581,4 +1625,39 @@ bool HomeDataPacket::HandleCanBoxData(T_STR_DATA_PACKET tPacket, T_APP_MSG& msg)
 	// }
 
 	return bRet;
+}
+
+/* ===== 互联连接有效性：只有收到会话级证据才认定“真连接” ===== */
+void HomeDataPacket::MarkCPLinkValid(const char* pWhy)
+{
+	HomeData &mData = HomeData::GetInstance();
+	int nCP = 0;
+	mData.GetINTData(INT_CARPLAYCONNECTSTATUS, nCP);
+	if (1 == nCP)
+	{
+		mData.SaveINTData(INT_CP_LINK_VALID, 1);
+		LOGDBG("CPLinkValid:1 by %s", pWhy);
+	}
+	else
+	{
+		mData.SaveINTData(INT_CP_LINK_VALID, 2);   // 证据先到，等 CONNECT=1 来确认
+		LOGDBG("CPLinkValid:2 pending by %s (cp=%d)", pWhy, nCP);
+	}
+}
+
+void HomeDataPacket::MarkAALinkValid(const char* pWhy)
+{
+	HomeData &mData = HomeData::GetInstance();
+	int nAA = 0;
+	mData.GetINTData(INT_ANDRIODCONNECTSTATUS, nAA);
+	if (1 == nAA)
+	{
+		mData.SaveINTData(INT_AA_LINK_VALID, 1);
+		LOGDBG("AALinkValid:1 by %s", pWhy);
+	}
+	else
+	{
+		mData.SaveINTData(INT_AA_LINK_VALID, 2);   // 证据先到，等 CONNECT=1 来确认
+		LOGDBG("AALinkValid:2 pending by %s (aa=%d)", pWhy, nAA);
+	}
 }

@@ -46,6 +46,10 @@ private:
 
 	bool HandleCanBoxData(T_STR_DATA_PACKET tPacket, T_APP_MSG& msg);
 
+	// 互联连接有效性标记：只有收到“会话级证据包”才把连接视为真连接
+	void MarkCPLinkValid(const char* pWhy);
+	void MarkAALinkValid(const char* pWhy);
+
 private:
 	IVIController *m_pCtrl;
 

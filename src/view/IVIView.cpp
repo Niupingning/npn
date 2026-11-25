@@ -187,7 +187,7 @@ void IVIView::ShowFirstWnd(std::string strParam)
 		ShowWnd(UIID_WNDID_MAIN, true);
 	}*/
 
-	showWnd(UIID_WNDID_MAIN, true);
+	ShowWnd(UIID_WNDID_MAIN, true);
 }
 
 bool IVIView::OnMouseMove(POINT point)
@@ -319,6 +319,12 @@ bool IVIView::OnUserMessage(T_APP_MSG *msg)
 			m_SplitView.SplitSetUsbMount(msg->Param0);  //分屏不在前台也要同步挂载状态
 			m_HomeView.HomeOnUserMessage(msg);
 			m_MediaView.MediaOnUserMessage(msg);
+		}
+		break;
+		case MOBILE_VMSG_MODILERESOURCE_LOAD_CPAA:
+		case MOBILE_VMSG_MODILERESOURCE_RELEASE_CPAA:
+		{
+			m_HomeView.HomeOnUserMessage(msg);
 		}
 		break;
 		case MEDIA_VMSG_PLAYSTATUS:
@@ -1454,9 +1460,29 @@ void IVIView::OnHandle_Source(int nSource)
 		break;
 		case IVI_SOURCE_CPAA:
 		{
-			//通知AA和CP在后台
-			m_ViewController->SendAndroidautoData(APP_APPSERVICE_OPENAA_TYPE,0);
-			m_ViewController->SendCarPlayData(APP_APPSERVICE_OPENCARPLAY_TYPE,0);
+			HomeData &mDataSrc = HomeData::GetInstance();
+			int nCPShow = 0;
+			int nAAShow = 0;
+			mDataSrc.GetINTData(INT_CARPLAYSHOWSTATUS, nCPShow);
+			mDataSrc.GetINTData(INT_AASHOWSTATUS, nAAShow);
+
+			if (NULL != m_ViewController)
+			{
+				if (1 == nAAShow)
+				{
+					m_ViewController->SendAndroidautoData(APP_APPSERVICE_OPENAA_TYPE,0);
+					LOGFILE("SourceLeave: hide AA (aa_show=1)");
+				}
+				if (1 == nCPShow)
+				{
+					m_ViewController->SendCarPlayData(APP_APPSERVICE_OPENCARPLAY_TYPE,0);
+					LOGFILE("SourceLeave: hide CP (cp_show=1)");
+				}
+			}
+			else
+			{
+				LOGFILE("SourceLeave: m_ViewController NULL, skip hide");
+			}
 
 			SetWindow_BK(UIID_WNDID_AVM,UUID_BACK_PIC);
 			m_HomeView.OnStartAvm_View(2);

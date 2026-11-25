@@ -44,6 +44,7 @@ enum ENUM_TIMER_ID
 	TIMERID_DEMO_WIN_SHOW = 1096,
 	TIMERID_SPLIT_WATCHDOG = 1097,   // 分屏看护：被其他窗口盖住就重新抬层
 	TIMERID_SPLIT_REPAINT = 1098,    // 分屏显示后延迟补画（等视频层resize完）
+	TIMERID_CPAA_CONFIRM = 1099,     // 互联点击后等待前台确认
 	TIMERID_MAX
 };
 
@@ -246,6 +247,8 @@ enum ENUM_INT_DATA_KEY
 	INT_CP_SPLITSTATUS = 57,   //CP分屏：0全屏 1分屏
 	INT_AA_SPLITSTATUS = 58,   //AA分屏：0全屏 1分屏
 	INT_SPLIT_PAGE = 59,       //分屏卡片当前页 0/1/2
+	INT_CP_LINK_VALID = 60,    //CP连接有效性：1=收到过会话级证据 0=只有连接上报
+	INT_AA_LINK_VALID = 61,    //AA连接有效性：1=收到过会话级证据 0=只有连接上报
 	INT_DATA_NUM
 };
 
