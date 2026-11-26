@@ -2599,6 +2599,12 @@ void EqView::onClick_SettingList()
 			pUIMgr->GetUIAnalysisObj()->ShowItem(UIID_WNDID_AUDIOBOOST, UIID_GROUP_LOUDNES,true);
 			pUIMgr->GetUIAnalysisObj()->SetItemText(UIID_WNDID_AUDIOBOOST, UIID_AUDIO_BOOST_RETURN, 601);
 
+			/* 先全部清空，再按配置只勾一个 */
+			pUIMgr->GetUIAnalysisObj()->SetItemIcon(UIID_WNDID_AUDIOBOOST, UIID_GROUP_LOUDNES_OFF,  0, ALL_STATE);
+			pUIMgr->GetUIAnalysisObj()->SetItemIcon(UIID_WNDID_AUDIOBOOST, UIID_GROUP_LOUDNES_LOW,  0, ALL_STATE);
+			pUIMgr->GetUIAnalysisObj()->SetItemIcon(UIID_WNDID_AUDIOBOOST, UIID_GROUP_LOUDNES_MID,  0, ALL_STATE);
+			pUIMgr->GetUIAnalysisObj()->SetItemIcon(UIID_WNDID_AUDIOBOOST, UIID_GROUP_LOUDNES_HIGH, 0, ALL_STATE);
+
 			if(m_loudness == 0)
 			{
 				pUIMgr->GetUIAnalysisObj()->SetItemIcon(UIID_WNDID_AUDIOBOOST, UIID_GROUP_LOUDNES_OFF, 907, ALL_STATE);
@@ -2606,19 +2612,15 @@ void EqView::onClick_SettingList()
 			else if(m_loudness == 1)
 			{
 				pUIMgr->GetUIAnalysisObj()->SetItemIcon(UIID_WNDID_AUDIOBOOST, UIID_GROUP_LOUDNES_LOW, 907, ALL_STATE);
-				pUIMgr->GetUIAnalysisObj()->SetItemIcon(UIID_WNDID_AUDIOBOOST, UIID_GROUP_LOUDNES_OFF, 0, ALL_STATE);
 			}
 			else if(m_loudness == 2)
 			{
 				pUIMgr->GetUIAnalysisObj()->SetItemIcon(UIID_WNDID_AUDIOBOOST, UIID_GROUP_LOUDNES_MID, 907, ALL_STATE);
-				pUIMgr->GetUIAnalysisObj()->SetItemIcon(UIID_WNDID_AUDIOBOOST, UIID_GROUP_LOUDNES_OFF, 0, ALL_STATE);
-			}			
+			}
 			else if(m_loudness == 3)
 			{
 				pUIMgr->GetUIAnalysisObj()->SetItemIcon(UIID_WNDID_AUDIOBOOST, UIID_GROUP_LOUDNES_HIGH, 907, ALL_STATE);
-				pUIMgr->GetUIAnalysisObj()->SetItemIcon(UIID_WNDID_AUDIOBOOST, UIID_GROUP_LOUDNES_OFF, 0, ALL_STATE);
-			}
-			else{}			
+			}		
 		}
 		break;
 		case 2:
@@ -2853,6 +2855,19 @@ void EqView::onClick_SettingList()
 			pUIMgr->GetUIAnalysisObj()->ShowItem(UIID_WNDID_AUDIOBOOST, UIID_GROUP_MAINLIST,false);
 			pUIMgr->GetUIAnalysisObj()->ShowItem(UIID_WNDID_AUDIOBOOST, UIID_GROUP_SUBFOOER,true);
 			pUIMgr->GetUIAnalysisObj()->SetItemText(UIID_WNDID_AUDIOBOOST, UIID_AUDIO_BOOST_RETURN, 606);
+
+			/* 进页面先按配置把 ON/OFF 勾选互斥设好，避免 UI 默认两个勾同时显示 */
+			int nSubwoofer = m_ConfigHelper->get("subwoofer_on");
+			pUIMgr->GetUIAnalysisObj()->SetItemIcon(UIID_WNDID_AUDIOBOOST, UIID_GROUP_SUBFOOER_ON,  0, ALL_STATE);
+			pUIMgr->GetUIAnalysisObj()->SetItemIcon(UIID_WNDID_AUDIOBOOST, UIID_GROUP_SUBFOOER_OFF, 0, ALL_STATE);
+			if(nSubwoofer == 0)
+			{
+				pUIMgr->GetUIAnalysisObj()->SetItemIcon(UIID_WNDID_AUDIOBOOST, UIID_GROUP_SUBFOOER_OFF, 907, ALL_STATE);
+			}
+			else
+			{
+				pUIMgr->GetUIAnalysisObj()->SetItemIcon(UIID_WNDID_AUDIOBOOST, UIID_GROUP_SUBFOOER_ON, 907, ALL_STATE);
+			}
 		}
 		break;
 		case 7:
@@ -3122,7 +3137,7 @@ void EqView::OnInit_EqView()
 	}
 	else
 	{
-		pList->SetItemString(6, 608, 1);
+		pList->SetItemString(6, 609, 1);
 	}
 
 	
