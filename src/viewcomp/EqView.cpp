@@ -2275,8 +2275,18 @@ void EqView::onClick_ReturnBtn()
 
 		int m_fade = m_ConfigHelper->get("fade");
 		int m_balance = m_ConfigHelper->get("balance");
+		if(m_fade    < -15 || m_fade    > 15)
+		{
+			m_fade = 0;
+		}
+		if(m_balance < -15 || m_balance > 15)
+		{
+			m_balance = 0;
+		}
 		wchar_t text[16] = {0};
-		swprintf(text,16, L"F%dR%d",abs(m_fade),abs(m_balance));
+		wchar_t cFadeDir = (m_fade >= 0) ? L'F' : L'R';
+		wchar_t cBalDir  = (m_balance >= 0) ? L'R' : L'L';
+		swprintf(text,16, L"%c%d%c%d", cFadeDir, abs(m_fade), cBalDir, abs(m_balance));
 		pList->SetItemString(0, text, 1);
 
 		int m_loudness = m_ConfigHelper->get("loudness");
@@ -2415,9 +2425,17 @@ void EqView::onClick_SettingList()
 
 			int m_fade = m_ConfigHelper->get("fade");
 			int m_balance = m_ConfigHelper->get("balance");
+			if(m_fade    < -15 || m_fade    > 15)
+			{
+				m_fade = 0;
+			}
+			if(m_balance < -15 || m_balance > 15)
+			{
+				m_balance = 0;
+			}
 			wchar_t text1[16] = {0};
 			wchar_t text2[16] = {0};
-			pUIMgr->GetUIAnalysisObj()->SetCursorPos(UIID_WNDID_AUDIOBOOST, UIID_GROUP_FADER_CURSOR, m_fade + 15, m_balance + 15);
+			pUIMgr->GetUIAnalysisObj()->SetCursorPos(UIID_WNDID_AUDIOBOOST, UIID_GROUP_FADER_CURSOR, m_balance + 15, m_fade + 15);
 
 			if(m_fade > 0 && m_fade <= 15)
 			{
@@ -2901,8 +2919,18 @@ void EqView::OnInit_EqView()
 
 	int m_nfader = m_ConfigHelper->get("fade");
 	int m_nbalance = m_ConfigHelper->get("balance");
+	if(m_nfader  < -15 || m_nfader  > 15)
+	{
+		m_nfader = 0;
+	}
+	if(m_nbalance < -15 || m_nbalance > 15)
+	{
+		m_nbalance = 0;
+	}
 	wchar_t fader[16] = {0};
-	swprintf(fader,16, L"F%dR%d", abs(m_nfader), abs(m_nbalance));
+	wchar_t cFadeDir = (m_nfader >= 0) ? L'F' : L'R';
+	wchar_t cBalDir  = (m_nbalance >= 0) ? L'R' : L'L';
+	swprintf(fader,16, L"%c%d%c%d", cFadeDir, abs(m_nfader), cBalDir, abs(m_nbalance));
 	pList->SetItemString(0, fader, 1);
 
 	int m_loudness = m_ConfigHelper->get("loudness");
