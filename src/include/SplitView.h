@@ -20,14 +20,12 @@ public:
 
 private:
 	void SplitUpdateRadio();
-	void SplitUpdateBTMusic();
 	void SplitUpdateUSB();
 	void SplitUpdatePageDot();
 	void SplitUpdateNoDevice(int nPage);
 	void SplitEnableTextFeature();
 	void SplitEnableUsbCtrl();
 	int  SplitPickDefaultPage();
-	int  MapSplitToBT(int nCtrlId);
 	int  MapSplitToMedia(int nCtrlId);
 
 	IVIController* m_ViewController;

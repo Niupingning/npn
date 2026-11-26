@@ -289,10 +289,6 @@ bool IVIView::OnUserMessage(T_APP_MSG *msg)
 			case METER_VMSG_UPDATE_RADIOINFO:
 			case MEDIA_VMSG_PLAYSTATUS:
 			case MEDIA_VMSG_PLAYTIME:
-			case METER_VMSG_BT_MUSIC_INFO:
-			case METER_VMSG_BT_MUSIC_TIME:
-			case METER_VMSG_BT_MUSICPLAY_STATE:
-			case METER_VMSG_BT_CONNECTED_STATE:
 			case SYS_VMSG_USBMOUNT:
 				m_SplitView.SplitOnUserMessage(msg);
 				break;

@@ -53,20 +53,6 @@ const int UIID_SPLIT_RADIO_SEARCHDN = 1014; //上一个
 const int UIID_SPLIT_RADIO_SEARCHUP = 1015; //下一个
 const int UIID_SPLIT_RADIO_NEXT     = 1016; //下一曲
 
-/* 窗口30 蓝牙音乐分组 1028 */
-const int UIID_SPLIT_GROUP_BT       = 1028;
-const int UIID_SPLIT_BT_TITLE       = 1019; //歌曲名称
-const int UIID_SPLIT_BT_ARTIST      = 1020; //歌手名称
-const int UIID_SPLIT_BT_ALBUM       = 1021; //专辑名称
-const int UIID_SPLIT_BT_PIC         = 1022; //专辑封面
-const int UIID_SPLIT_BT_PROGRESS    = 1023; //扩展进度条
-const int UIID_SPLIT_BT_TIME        = 1012; //播放时间
-const int UIID_SPLIT_BT_TOTAL       = 1027; //歌曲总时间
-const int UIID_SPLIT_BT_PREV        = 1009; //上一曲
-const int UIID_SPLIT_BT_PLAY        = 1024; //播放
-const int UIID_SPLIT_BT_PAUSE       = 1025; //暂停
-const int UIID_SPLIT_BT_NEXT        = 1026; //下一曲
-
 /* 窗口30 USB音乐分组 1029 */
 const int UIID_SPLIT_GROUP_USB      = 1029;
 const int UIID_SPLIT_MEDIA_TITLE    = 1030; //歌曲名称
@@ -86,9 +72,8 @@ const int UIID_SPLIT_MEDIA_FLODER   = 1043; //文件夹循环播放
 const int UIID_SPLIT_MEDIA_SINGLE   = 1044; //单曲循环播放
 
 /* 窗口30 分页点 / 无设备 */
-const int UIID_SPLIT_PAGE_DOT_RADIO = 1045; //分页符-1
-const int UIID_SPLIT_PAGE_DOT_BT    = 1046; //分页符-2
-const int UIID_SPLIT_PAGE_DOT_USB   = 1047; //分页符-3
+const int UIID_SPLIT_PAGE_DOT_RADIO = 1045; //分页符-1(Radio)
+const int UIID_SPLIT_PAGE_DOT_USB   = 1046; //分页符-2(USB)
 const int UIID_SPLIT_NO_DEVICE      = 1048; //No Device
 
  /* title public Id*/
@@ -142,8 +127,7 @@ enum
 enum
 {
     SPLIT_PAGE_RADIO = 0,
-    SPLIT_PAGE_BT    = 1,
-    SPLIT_PAGE_USB   = 2,
+    SPLIT_PAGE_USB   = 1,
 };
 
 /*

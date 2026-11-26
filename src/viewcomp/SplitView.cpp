@@ -2,7 +2,6 @@
 #include "IVIView.h"
 #include "HomeData.h"
 #include "RadioData.h"
-#include "BTData.h"
 #include "MediaView.h"
 #include "MediaData.h"
 
@@ -58,7 +57,6 @@ void SplitView::SplitEnableTextFeature()
 
 	const int arrId[] = {
 		UIID_SPLIT_MEDIA_TITLE,  UIID_SPLIT_MEDIA_ARTIST, UIID_SPLIT_MEDIA_ALBUM,
-		UIID_SPLIT_BT_TITLE,     UIID_SPLIT_BT_ARTIST,    UIID_SPLIT_BT_ALBUM,
 		UIID_SPLIT_RADIO_FREQ,   UIID_SPLIT_RADIO_PS,
 	};
 
@@ -90,16 +88,11 @@ void SplitView::SplitSetPage(int nPage)
 	HomeData::GetInstance().SaveINTData(INT_SPLIT_PAGE, nPage);
 
 	p->ShowItem(UIID_WNDID_SPLIT, UIID_SPLIT_GROUP_RADIO, SPLIT_PAGE_RADIO == nPage);
-	p->ShowItem(UIID_WNDID_SPLIT, UIID_SPLIT_GROUP_BT,    SPLIT_PAGE_BT    == nPage);
 	p->ShowItem(UIID_WNDID_SPLIT, UIID_SPLIT_GROUP_USB,   SPLIT_PAGE_USB   == nPage);
 
 	// 顶部媒体源名称随分页切换
 	const wchar_t *pName = L"Radio";
-	if(SPLIT_PAGE_BT  == nPage)
-	{
-		pName = L"Bluetooth Audio";
-	}
-	else if(SPLIT_PAGE_USB == nPage)
+	if (SPLIT_PAGE_USB == nPage)
 	{
 		pName = L"USB";
 	}
@@ -111,65 +104,41 @@ void SplitView::SplitSetPage(int nPage)
 	switch (nPage)
 	{
 		case SPLIT_PAGE_RADIO:
-		{
 			SplitUpdateRadio();
-		}
-		break;
-		case SPLIT_PAGE_BT:
-		{
-			SplitUpdateBTMusic();
-		}
-		break;
+			break;
 		case SPLIT_PAGE_USB:
-		{
 			SplitUpdateUSB();
 			SplitTryAutoPlayUsb();
-		}
-		break;
+			break;
 	}
 }
 
-/* 三个分页点的选中态 */
+/* 分页点的选中态 */
 void SplitView::SplitUpdatePageDot()
 {
 	CUIAnalysis* p = GetViewBase()->GetUIWndMgrWrapper()->GetUIAnalysisObj();
 	if (NULL == p) return;
 
-	// 三个分页点属于整个分屏窗口，任何一页都要显示
+	// 资源里已去掉蓝牙页，只剩 Radio(1045) / USB(1046)
 	p->ShowItem(UIID_WNDID_SPLIT, UIID_SPLIT_PAGE_DOT_RADIO, true);
-	p->ShowItem(UIID_WNDID_SPLIT, UIID_SPLIT_PAGE_DOT_BT,    true);
 	p->ShowItem(UIID_WNDID_SPLIT, UIID_SPLIT_PAGE_DOT_USB,   true);
 
-	// 当前页用 NORMAL(亮)，其余页用 SELECTED(暗)，与资源图标亮暗对应
 	p->SetItemState(UIID_WNDID_SPLIT, UIID_SPLIT_PAGE_DOT_RADIO,
 		(SPLIT_PAGE_RADIO == m_nCurPage) ? ITEM_STATE_NORMAL : ITEM_STATE_SELECTED);
-	p->SetItemState(UIID_WNDID_SPLIT, UIID_SPLIT_PAGE_DOT_BT,
-		(SPLIT_PAGE_BT == m_nCurPage) ? ITEM_STATE_NORMAL : ITEM_STATE_SELECTED);
 	p->SetItemState(UIID_WNDID_SPLIT, UIID_SPLIT_PAGE_DOT_USB,
 		(SPLIT_PAGE_USB == m_nCurPage) ? ITEM_STATE_NORMAL : ITEM_STATE_SELECTED);
 }
 
-/* No Device 显示规则：Radio 永远有；BT 未连接显示；USB 未挂载显示 */
+/* No Device 显示规则：Radio 永远有；USB 未挂载显示 */
 void SplitView::SplitUpdateNoDevice(int nPage)
 {
 	CUIAnalysis* p = GetViewBase()->GetUIWndMgrWrapper()->GetUIAnalysisObj();
 	if (NULL == p) return;
+
 	bool bNoDevice = false;
-	if (SPLIT_PAGE_BT == nPage)
-	{
-		bNoDevice = (2 != BTData::GetInstance().GetBtConnectStatus());
-	}
-	else if (SPLIT_PAGE_USB == nPage)
+	if (SPLIT_PAGE_USB == nPage)
 	{
 		bNoDevice = (!m_bUSBMounted);
-	}
-
-	if (SPLIT_PAGE_BT == nPage)
-	{
-		p->ShowItem(UIID_WNDID_SPLIT, UIID_SPLIT_GROUP_BT, !bNoDevice);
-	}
-	else if (SPLIT_PAGE_USB == nPage)
-	{
 		p->ShowItem(UIID_WNDID_SPLIT, UIID_SPLIT_GROUP_USB, !bNoDevice);
 	}
 
@@ -180,9 +149,14 @@ void SplitView::SplitOnClick(CUIWndMng* pUI, long nCtrlId, int nBtState)
 {
 	switch (nCtrlId)
 	{
-		case UIID_SPLIT_PAGE_DOT_RADIO: SplitSetPage(SPLIT_PAGE_RADIO); return;
-		case UIID_SPLIT_PAGE_DOT_BT:    SplitSetPage(SPLIT_PAGE_BT);    return;
-		case UIID_SPLIT_PAGE_DOT_USB:   SplitSetPage(SPLIT_PAGE_USB);   return;
+		case UIID_SPLIT_PAGE_DOT_RADIO: SplitSetPage(SPLIT_PAGE_RADIO);
+		{
+			return;
+		}
+		case UIID_SPLIT_PAGE_DOT_USB:   SplitSetPage(SPLIT_PAGE_USB);
+		{
+			return;
+		}
 		default: break;
 	}
 
@@ -190,10 +164,6 @@ void SplitView::SplitOnClick(CUIWndMng* pUI, long nCtrlId, int nBtState)
 	if (SPLIT_PAGE_RADIO == m_nCurPage)
 	{
 		pView->GetRadioView()->RadioOnClick(pUI, UIID_WNDID_RADIO, nCtrlId, nBtState);
-	}
-	else if (SPLIT_PAGE_BT == m_nCurPage)
-	{
-		pView->GetBTView()->BTOnClick(pUI, UIID_WNDID_BT_MUSIC, MapSplitToBT(nCtrlId), nBtState);
 	}
 	else
 	{
@@ -255,20 +225,6 @@ bool SplitView::SplitOnUserMessage(T_APP_MSG* msg)
 		case SPLIT_PAGE_RADIO:
 			if (METER_VMSG_UPDATE_RADIOINFO == msg->Message) SplitUpdateRadio();
 			break;
-		case SPLIT_PAGE_BT:
-			if (METER_VMSG_BT_CONNECTED_STATE == msg->Message)
-			{
-				// 连接/断开要切换 No Device 与正常卡片
-				SplitUpdateNoDevice(SPLIT_PAGE_BT);
-				SplitUpdateBTMusic();
-			}
-			else if (METER_VMSG_BT_MUSIC_INFO == msg->Message ||
-				METER_VMSG_BT_MUSIC_TIME == msg->Message ||
-				METER_VMSG_BT_MUSICPLAY_STATE == msg->Message)
-			{
-				SplitUpdateBTMusic();
-			}
-			break;
 		case SPLIT_PAGE_USB:
 			if (SYS_VMSG_USBMOUNT == msg->Message)
 			{
@@ -290,40 +246,19 @@ bool SplitView::SplitOnUserMessage(T_APP_MSG* msg)
 int SplitView::SplitPickDefaultPage()
 {
 	int nSrc = ((IVIView*)GetViewBase())->Get_CurSource();
-	if (IVI_SOURCE_BT_MUSIC == nSrc) return SPLIT_PAGE_BT;
-	if (IVI_SOURCE_MEDIA    == nSrc) return SPLIT_PAGE_USB;
+	if (IVI_SOURCE_MEDIA == nSrc) return SPLIT_PAGE_USB;
 	return SPLIT_PAGE_RADIO;
 }
 
 /* 滑动切页 */
 void SplitView::SplitSwipe(int nDir)
 {
-	int nNext = m_nCurPage + nDir;
-	if (nNext < 0) nNext = SPLIT_PAGE_USB;
-	if (nNext > SPLIT_PAGE_USB) nNext = SPLIT_PAGE_RADIO;
+	(void)nDir;
+	int nNext = (SPLIT_PAGE_RADIO == m_nCurPage) ? SPLIT_PAGE_USB : SPLIT_PAGE_RADIO;
 	SplitSetPage(nNext);
 }
 
 /* ==================== ID 映射：分屏卡片ID → 原窗口ID ==================== */
-int SplitView::MapSplitToBT(int nCtrlId)
-{
-	switch (nCtrlId)
-	{
-		case 1019: return 1004;  //歌名
-		case 1020: return 1005;  //歌手
-		case 1021: return 1006;  //专辑
-		case 1022: return 1007;  //封面
-		case 1023: return 1008;  //进度条
-		case 1012: return 1012;  //当前时间
-		case 1027: return 1013;  //总时长
-		case 1009: return 1009;  //上一曲
-		case 1024: return 1010;  //播放
-		case 1025: return 1010;  //暂停
-		case 1026: return 1011;  //下一曲
-		default: return nCtrlId;
-	}
-}
-
 int SplitView::MapSplitToMedia(int nCtrlId)
 {
 	switch (nCtrlId)
@@ -383,61 +318,6 @@ void SplitView::SplitUpdateRadio()
 		p->SetItemText(UIID_WNDID_SPLIT, UIID_SPLIT_RADIO_UNIT, 108);   // kHz
 	}
 	p->SetItemText(UIID_WNDID_SPLIT, UIID_SPLIT_RADIO_FREQ, wszBuf);
-}
-
-/* ==================== BT 音乐卡片数据刷新 ==================== */
-void SplitView::SplitUpdateBTMusic()
-{
-	CUIAnalysis* p = GetViewBase()->GetUIWndMgrWrapper()->GetUIAnalysisObj();
-	if (NULL == p) return;
-	BTData &mBT = BTData::GetInstance();
-
-	// 歌名/歌手/专辑
-	BtMusicInfo_t tInfo;
-	mBT.GetBTMusicInfo(tInfo);
-	char szTitle[2*1024] = {0}, szArtist[2*1024] = {0}, szAlbum[2*1024] = {0};
-	size_t nLen = 1024;
-	BTView *pBTView = ((IVIView*)GetViewBase())->GetBTView();
-	pBTView->ConverDecode((char*)tInfo.abTitle,  szTitle,  nLen);
-	nLen = 1024;
-	pBTView->ConverDecode((char*)tInfo.abArtist, szArtist, nLen);
-	nLen = 1024;
-	pBTView->ConverDecode((char*)tInfo.abAlbum,  szAlbum,  nLen);
-	p->SetItemText(UIID_WNDID_SPLIT, UIID_SPLIT_BT_TITLE,  (wchar_t*)szTitle);
-	p->SetItemText(UIID_WNDID_SPLIT, UIID_SPLIT_BT_ARTIST, (wchar_t*)szArtist);
-	p->SetItemText(UIID_WNDID_SPLIT, UIID_SPLIT_BT_ALBUM,  (wchar_t*)szAlbum);
-
-	// 播放/暂停图标
-	int nStatus = mBT.GetBTMusicStatus();
-	if (1 == nStatus)
-	{
-		p->SetItemIcon(UIID_WNDID_SPLIT, UIID_SPLIT_BT_PAUSE, 211, ITEM_STATE_NORMAL);
-		p->SetItemIcon(UIID_WNDID_SPLIT, UIID_SPLIT_BT_PAUSE, 212, ITEM_STATE_PUSH);
-		p->ShowItem(UIID_WNDID_SPLIT, UIID_SPLIT_BT_PLAY,  false);
-		p->ShowItem(UIID_WNDID_SPLIT, UIID_SPLIT_BT_PAUSE, true);
-	}
-	else
-	{
-		p->SetItemIcon(UIID_WNDID_SPLIT, UIID_SPLIT_BT_PLAY, 214, ITEM_STATE_NORMAL);
-		p->SetItemIcon(UIID_WNDID_SPLIT, UIID_SPLIT_BT_PLAY, 215, ITEM_STATE_PUSH);
-		p->ShowItem(UIID_WNDID_SPLIT, UIID_SPLIT_BT_PLAY,  true);
-		p->ShowItem(UIID_WNDID_SPLIT, UIID_SPLIT_BT_PAUSE, false);
-	}
-
-	// 时间
-	BtPlaybackTime_t tTime;
-	mBT.GetBTMusicTime(tTime);
-	int nCur   = tTime.dCurrentTime / 1000;    // ← 毫秒转秒
-	int nTotal = tTime.dTotalTime   / 1000;    // ← 毫秒转秒
-	wchar_t wszTime[32] = {0}, wszTotal[32] = {0};
-	swprintf(wszTime,  32, L"%02d:%02d", nCur   / 60, nCur   % 60);
-	swprintf(wszTotal, 32, L"%02d:%02d", nTotal / 60, nTotal % 60);
-	p->SetItemText(UIID_WNDID_SPLIT, UIID_SPLIT_BT_TIME,  wszTime);
-	p->SetItemText(UIID_WNDID_SPLIT, UIID_SPLIT_BT_TOTAL, wszTotal);
-
-	// 进度条
-	int nPercent = (nTotal > 0) ? (nCur * 100 / nTotal) : 0;
-	p->SetProgressItemPos(UIID_WNDID_SPLIT, UIID_SPLIT_BT_PROGRESS, nPercent);
 }
 
 /* ==================== USB 音乐卡片数据刷新 ==================== */

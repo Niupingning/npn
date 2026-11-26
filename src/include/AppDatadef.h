@@ -246,7 +246,7 @@ enum ENUM_INT_DATA_KEY
 	INT_AVM_SIGN = 56,
 	INT_CP_SPLITSTATUS = 57,   //CP分屏：0全屏 1分屏
 	INT_AA_SPLITSTATUS = 58,   //AA分屏：0全屏 1分屏
-	INT_SPLIT_PAGE = 59,       //分屏卡片当前页 0/1/2
+	INT_SPLIT_PAGE = 59,       //分屏卡片当前页 0=Radio 1=USB
 	INT_CP_LINK_VALID = 60,    //CP连接有效性：1=收到过会话级证据 0=只有连接上报
 	INT_AA_LINK_VALID = 61,    //AA连接有效性：1=收到过会话级证据 0=只有连接上报
 	INT_DATA_NUM
