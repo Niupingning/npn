@@ -37,6 +37,31 @@ using FY_NAMESPACE::CUIWndMgrWrapper;
 using FY_NAMESPACE::LAUNCH_FORYOUAPP;
 using std::make_pair;
 
+/* EQ页7个类型按钮，顺序与 eq_mode(0~6) 一一对应 */
+static const int g_eqTypeBtnId[EqModeMax] = {
+    UIID_GROUP_EQ_SUPERBASS,   /* 0 */
+    UIID_GROUP_EQ_POWERFUL,    /* 1 */
+    UIID_GROUP_EQ_NATURAL,     /* 2 */
+    UIID_GROUP_EQ_VOCAL,       /* 3 */
+    UIID_GROUP_EQ_FLAT,        /* 4 */
+    UIID_GROUP_EQ_CUSTOM1,     /* 5 */
+    UIID_GROUP_EQ_CUSTOM2      /* 6 */
+};
+
+/* 切EQ类型选中态：选中 = 字体20 + 选中图1044(底部三角)，其余置正常 */
+static void SetEqTypeSelected(CUIAnalysis *pUI, int mode)
+{
+    if(NULL == pUI)
+    {
+        return;
+    }
+    for(int i = 0; i < EqModeMax; i++)
+    {
+        pUI->SetItemState(UIID_WNDID_AUDIOBOOST, g_eqTypeBtnId[i],
+                          (i == mode) ? ITEM_STATE_SELECTED : ITEM_STATE_NORMAL);
+    }
+}
+
 
 EqView::EqView(ViewBase* p_ViewBase)
 	: CompBase(p_ViewBase)
@@ -429,10 +454,8 @@ void EqView::EqOnClick(CUIWndMng* pUI, long nWndId, long nCtrlId, int nBtState)
 			case UIID_GROUP_EQ_GAIN_11:
 			case UIID_GROUP_EQ_GAIN_12:
 			case UIID_GROUP_EQ_GAIN_13:
-			case UIID_GROUP_EQ_LEFT:
-			case UIID_GROUP_EQ_RIGHT:
 			{
-				CUIWndMgrWrapper *pUIMgr = NULL; 
+				CUIWndMgrWrapper *pUIMgr = NULL;
 				pUIMgr = GetViewBase()->GetUIWndMgrWrapper();
 				if (NULL == pUIMgr)
 				{
@@ -440,312 +463,26 @@ void EqView::EqOnClick(CUIWndMng* pUI, long nWndId, long nCtrlId, int nBtState)
 					return;
 				}
 
-				/*
-				UIITEMDATA UItem;
-				memset(&UItem,0,sizeof(UItem));
-				pUIMgr->GetUIAnalysisObj()->GetItemData(UIID_WNDID_AUDIOBOOST,UIID_GROUP_EQ_CONT,UItem);
-				CUI_BtList *pList = (CUI_BtList*) UItem.m_pCtrl;
-
-				int nline = pList->GetTopIndex();
-				LOGDBG("GetTopIndex = %d",nline);
-				*/
-
-				int m_eqmode = m_ConfigHelper->get("eq_mode");
-				vector<int> eq_custom;
-				eq_custom.reserve(13);
-				char config_item_name[32] = {0};
-				
+				/* 1. 取13条进度条当前位置：pos 0~12 -> gain -12~+12（1803~1815 连续） */
+				vector<int> eq_gain;
+				eq_gain.reserve(13);
 				for(int i = 0; i < 13; i++)
 				{
-					sprintf(config_item_name, "custom1_index%d", i);
-					eq_custom.push_back(m_ConfigHelper->get(config_item_name));
+					int pos = pUIMgr->GetUIAnalysisObj()->GetProgressItemPos(UIID_WNDID_AUDIOBOOST, UIID_GROUP_EQ_GAIN_1 + i);
+					eq_gain.push_back(pos * 2 - 12);
 				}
 
-				switch(nCtrlId)
-				{
-					case UIID_GROUP_EQ_GAIN_1:
-					{
-						int eq_gain = pUIMgr->GetUIAnalysisObj()->GetProgressItemPos(UIID_WNDID_AUDIOBOOST, UIID_GROUP_EQ_GAIN_1);
-						if(m_eqmode == 5)
-						{	
-							eq_custom[0] = eq_gain*2 - 12;
-						}
-						else
-						{
-							adEqInfo[m_eqmode].eq_gain_array[0] = eq_gain*2 - 12;
-							for(int i = 0; i < 13; i++)
-							{
-								eq_custom[i] = adEqInfo[m_eqmode].eq_gain_array[i];
-							}
-							//pList->SetCurSel(5, 0);
-						}
-						m_AudioControl->setEqValue(5, eq_custom);
-						break;
-					}
-					case UIID_GROUP_EQ_GAIN_2:
-					{
-						int eq_gain = pUIMgr->GetUIAnalysisObj()->GetProgressItemPos(UIID_WNDID_AUDIOBOOST, UIID_GROUP_EQ_GAIN_2);
-						if(m_eqmode == 5)
-						{	
-							eq_custom[1] = eq_gain*2 - 12;
-						}
-						else
-						{
-							adEqInfo[m_eqmode].eq_gain_array[2] = eq_gain*2 - 12;
-							for(int i = 0; i < 13; i++)
-							{
-								eq_custom[i] = adEqInfo[m_eqmode].eq_gain_array[i];
-							}
-							//pList->SetCurSel(5, 0);
-						}
-						m_AudioControl->setEqValue(5, eq_custom);
-						break;
-					}
-					case UIID_GROUP_EQ_GAIN_3:
-					{
-						int eq_gain = pUIMgr->GetUIAnalysisObj()->GetProgressItemPos(UIID_WNDID_AUDIOBOOST, UIID_GROUP_EQ_GAIN_3);
-						if(m_eqmode == 5)
-						{	
-							eq_custom[2] = eq_gain*2 - 12;
-						}
-						else
-						{
-							adEqInfo[m_eqmode].eq_gain_array[2] = eq_gain*2 - 12;
-							for(int i = 0; i < 13; i++)
-							{
-								eq_custom[i] = adEqInfo[m_eqmode].eq_gain_array[i];
-							}
-							//pList->SetCurSel(5, 0);
-						}
-						m_AudioControl->setEqValue(5, eq_custom);
-						break;
-					}
-					case UIID_GROUP_EQ_GAIN_4:
-					{
-						int eq_gain = pUIMgr->GetUIAnalysisObj()->GetProgressItemPos(UIID_WNDID_AUDIOBOOST, UIID_GROUP_EQ_GAIN_4);
-						if(m_eqmode == 5)
-						{	
-							eq_custom[3] = eq_gain*2 - 12;
-						}
-						else
-						{
-							adEqInfo[m_eqmode].eq_gain_array[3] = eq_gain*2 - 12;
-							for(int i = 0; i < 13; i++)
-							{
-								eq_custom[i] = adEqInfo[m_eqmode].eq_gain_array[i];
-							}
-							//pList->SetCurSel(5, 0);
-						}
-						m_AudioControl->setEqValue(5, eq_custom);
-						break;
-					}
-					case UIID_GROUP_EQ_GAIN_5:
-					{
-						int eq_gain = pUIMgr->GetUIAnalysisObj()->GetProgressItemPos(UIID_WNDID_AUDIOBOOST, UIID_GROUP_EQ_GAIN_5);
-						if(m_eqmode == 5)
-						{	
-							eq_custom[4] = eq_gain*2 - 12;
-						}
-						else
-						{
-							adEqInfo[m_eqmode].eq_gain_array[4] = eq_gain*2 - 12;
-							for(int i = 0; i < 13; i++)
-							{
-								eq_custom[i] = adEqInfo[m_eqmode].eq_gain_array[i];
-							}
-							//pList->SetCurSel(5, 0);
-						}
-						m_AudioControl->setEqValue(5, eq_custom);
-						break;
-					}
-					case UIID_GROUP_EQ_GAIN_6:
-					{
-						int eq_gain = pUIMgr->GetUIAnalysisObj()->GetProgressItemPos(UIID_WNDID_AUDIOBOOST, UIID_GROUP_EQ_GAIN_6);
-						if(m_eqmode == 5)
-						{	
-							eq_custom[5] = eq_gain*2 - 12;
-						}
-						else
-						{
-							adEqInfo[m_eqmode].eq_gain_array[5] = eq_gain*2 - 12;
-							for(int i = 0; i < 13; i++)
-							{
-								eq_custom[i] = adEqInfo[m_eqmode].eq_gain_array[i];
-							}
-							//pList->SetCurSel(5, 0);
-						}
-						m_AudioControl->setEqValue(5, eq_custom);
-						break;
-					}
-					case UIID_GROUP_EQ_GAIN_7:
-					{
-						int eq_gain = pUIMgr->GetUIAnalysisObj()->GetProgressItemPos(UIID_WNDID_AUDIOBOOST, UIID_GROUP_EQ_GAIN_7);
-						if(m_eqmode == 5)
-						{	
-							eq_custom[6] = eq_gain*2 - 12;
-						}
-						else
-						{
-							adEqInfo[m_eqmode].eq_gain_array[6] = eq_gain*2 - 12;
-							for(int i = 0; i < 13; i++)
-							{
-								eq_custom[i] = adEqInfo[m_eqmode].eq_gain_array[i];
-							}
-							//pList->SetCurSel(5, 0);
-						}
-						m_AudioControl->setEqValue(5, eq_custom);
-						break;
-					}
-					case UIID_GROUP_EQ_GAIN_8:
-					{
-						int eq_gain = pUIMgr->GetUIAnalysisObj()->GetProgressItemPos(UIID_WNDID_AUDIOBOOST, UIID_GROUP_EQ_GAIN_8);
-						if(m_eqmode == 5)
-						{	
-							eq_custom[7] = eq_gain*2 - 12;
-						}
-						else
-						{
-							adEqInfo[m_eqmode].eq_gain_array[7] = eq_gain*2 - 12;
-							for(int i = 0; i < 13; i++)
-							{
-								eq_custom[i] = adEqInfo[m_eqmode].eq_gain_array[i];
-							}
-							//pList->SetCurSel(5, 0);
-						}
-						m_AudioControl->setEqValue(5, eq_custom);
-						break;
-					}
-					case UIID_GROUP_EQ_GAIN_9:
-					{
-						int eq_gain = pUIMgr->GetUIAnalysisObj()->GetProgressItemPos(UIID_WNDID_AUDIOBOOST, UIID_GROUP_EQ_GAIN_9);
-						if(m_eqmode == 5)
-						{	
-							eq_custom[8] = eq_gain*2 - 12;
-						}
-						else
-						{
-							adEqInfo[m_eqmode].eq_gain_array[8] = eq_gain*2 - 12;
-							for(int i = 0; i < 13; i++)
-							{
-								eq_custom[i] = adEqInfo[m_eqmode].eq_gain_array[i];
-							}
-							//pList->SetCurSel(5, 0);
-						}
-						m_AudioControl->setEqValue(5, eq_custom);
-						break;
-					}
-					case UIID_GROUP_EQ_GAIN_10:
-					{
-						int eq_gain = pUIMgr->GetUIAnalysisObj()->GetProgressItemPos(UIID_WNDID_AUDIOBOOST, UIID_GROUP_EQ_GAIN_10);
-						if(m_eqmode == 5)
-						{	
-							eq_custom[9] = eq_gain*2 - 12;
-						}
-						else
-						{
-							adEqInfo[m_eqmode].eq_gain_array[9] = eq_gain*2 - 12;
-							for(int i = 0; i < 13; i++)
-							{
-								eq_custom[i] = adEqInfo[m_eqmode].eq_gain_array[i];
-							}
-							//pList->SetCurSel(5, 0);
-						}
-						m_AudioControl->setEqValue(5, eq_custom);
-						break;
-					}
-					case UIID_GROUP_EQ_GAIN_11:
-					{
-						int eq_gain = pUIMgr->GetUIAnalysisObj()->GetProgressItemPos(UIID_WNDID_AUDIOBOOST, UIID_GROUP_EQ_GAIN_11);
-						if(m_eqmode == 5)
-						{	
-							eq_custom[10] = eq_gain*2 - 12;
-						}
-						else
-						{
-							adEqInfo[m_eqmode].eq_gain_array[10] = eq_gain*2 - 12;
-							for(int i = 0; i < 13; i++)
-							{
-								eq_custom[i] = adEqInfo[m_eqmode].eq_gain_array[i];
-							}
-							//pList->SetCurSel(5, 0);
-						}
-						m_AudioControl->setEqValue(5, eq_custom);
-						break;
-					}	
-					case UIID_GROUP_EQ_GAIN_12:
-					{
-						int eq_gain = pUIMgr->GetUIAnalysisObj()->GetProgressItemPos(UIID_WNDID_AUDIOBOOST, UIID_GROUP_EQ_GAIN_12);
-						if(m_eqmode == 5)
-						{	
-							eq_custom[11] = eq_gain*2 - 12;
-						}
-						else
-						{
-							adEqInfo[m_eqmode].eq_gain_array[11] = eq_gain*2 - 12;
-							for(int i = 0; i < 13; i++)
-							{
-								eq_custom[i] = adEqInfo[m_eqmode].eq_gain_array[i];
-							}
-							//pList->SetCurSel(5, 0);
-						}
-						m_AudioControl->setEqValue(5, eq_custom);
-						break;
-					}
-					case UIID_GROUP_EQ_GAIN_13:
-					{
-						int eq_gain = pUIMgr->GetUIAnalysisObj()->GetProgressItemPos(UIID_WNDID_AUDIOBOOST, UIID_GROUP_EQ_GAIN_13);
-						if(m_eqmode == 5)
-						{	
-							eq_custom[12] = eq_gain*2 - 12;
-						}
-						else
-						{
-							adEqInfo[m_eqmode].eq_gain_array[12] = eq_gain*2 - 12;
-							for(int i = 0; i < 13; i++)
-							{
-								eq_custom[i] = adEqInfo[m_eqmode].eq_gain_array[i];
-							}
-							//pList->SetCurSel(5, 0);
-						}
-						m_AudioControl->setEqValue(5, eq_custom);
-						break;
-					}
-					case UIID_GROUP_EQ_LEFT:
-					{
-						/*if(nline == 3)
-						{
-							//pList->SetTopIndex(0);
-							pUIMgr->GetUIAnalysisObj()->SetItemState(UIID_WNDID_AUDIOBOOST, UIID_GROUP_EQ_LEFT, ITEM_STATE_DISABLE);
-							pUIMgr->GetUIAnalysisObj()->SetItemState(UIID_WNDID_AUDIOBOOST, UIID_GROUP_EQ_RIGHT, ITEM_STATE_NORMAL);
-						}
-						else
-						{
+				/* 2. 手动调节固定落“自定义2”：内部写 custom2_index0~12 + eq_mode=6 */
+				m_AudioControl->setEqValue(EqCustom2, eq_gain);
 
-						}*/
-						break;
-					}	
-					case UIID_GROUP_EQ_RIGHT:
-					{
-						/*
-						if(nline == 0 || nline == 1 || nline == 2)
-						{
-							//pList->SetTopIndex(3);
-							pUIMgr->GetUIAnalysisObj()->SetItemState(UIID_WNDID_AUDIOBOOST, UIID_GROUP_EQ_RIGHT, ITEM_STATE_DISABLE);
-							pUIMgr->GetUIAnalysisObj()->SetItemState(UIID_WNDID_AUDIOBOOST, UIID_GROUP_EQ_LEFT, ITEM_STATE_NORMAL);
-						}
-						else 
-						{
-
-						}*/
-						break;
-					}																																																										
-					default:
-					{
-						break;		
-					}				
-				}
-				
-				break;		
+				/* 3. EQ类型选中态跳到Custom2（2019按钮置选中，其余置正常） */
+				SetEqTypeSelected(pUIMgr->GetUIAnalysisObj(), EqCustom2);
+				break;
+			}
+			case UIID_GROUP_EQ_LEFT:
+			case UIID_GROUP_EQ_RIGHT:
+			{
+				break;
 			}
 			case UIID_GROUP_EQ_SUPERBASS:
 			{
@@ -758,6 +495,7 @@ void EqView::EqOnClick(CUIWndMng* pUI, long nWndId, long nCtrlId, int nBtState)
 					GetViewBase()->GetUIWndMgrWrapper()->GetUIAnalysisObj()->SetProgressItemValues(UIID_WNDID_AUDIOBOOST,1803+i,12,(tmp[i]+12)/2);
 				}
 				m_AudioControl->setEqValue(0, gain);
+				SetEqTypeSelected(GetViewBase()->GetUIWndMgrWrapper()->GetUIAnalysisObj(), EqSuperBass);
 				break;
 			}
 			case UIID_GROUP_EQ_POWERFUL:
@@ -771,6 +509,7 @@ void EqView::EqOnClick(CUIWndMng* pUI, long nWndId, long nCtrlId, int nBtState)
 					GetViewBase()->GetUIWndMgrWrapper()->GetUIAnalysisObj()->SetProgressItemValues(UIID_WNDID_AUDIOBOOST,1803+i,12,(tmp[i]+12)/2);
 				}
 				m_AudioControl->setEqValue(1, gain);
+				SetEqTypeSelected(GetViewBase()->GetUIWndMgrWrapper()->GetUIAnalysisObj(), EqPowerful);
 				break;
 			}
 			case UIID_GROUP_EQ_NATURAL:
@@ -784,6 +523,7 @@ void EqView::EqOnClick(CUIWndMng* pUI, long nWndId, long nCtrlId, int nBtState)
 					GetViewBase()->GetUIWndMgrWrapper()->GetUIAnalysisObj()->SetProgressItemValues(UIID_WNDID_AUDIOBOOST,1803+i,12,(tmp[i]+12)/2);
 				}				
 				m_AudioControl->setEqValue(2, gain);
+				SetEqTypeSelected(GetViewBase()->GetUIWndMgrWrapper()->GetUIAnalysisObj(), EqNatural);
 				break;
 			}
 			case UIID_GROUP_EQ_VOCAL:
@@ -797,6 +537,7 @@ void EqView::EqOnClick(CUIWndMng* pUI, long nWndId, long nCtrlId, int nBtState)
 					GetViewBase()->GetUIWndMgrWrapper()->GetUIAnalysisObj()->SetProgressItemValues(UIID_WNDID_AUDIOBOOST,1803+i,12,(tmp[i]+12)/2);
 				}				
 				m_AudioControl->setEqValue(3, gain);
+				SetEqTypeSelected(GetViewBase()->GetUIWndMgrWrapper()->GetUIAnalysisObj(), EqVocal);
 				break;
 			}
 			case UIID_GROUP_EQ_FLAT:
@@ -810,26 +551,47 @@ void EqView::EqOnClick(CUIWndMng* pUI, long nWndId, long nCtrlId, int nBtState)
 					GetViewBase()->GetUIWndMgrWrapper()->GetUIAnalysisObj()->SetProgressItemValues(UIID_WNDID_AUDIOBOOST,1803+i,12,(tmp[i]+12)/2);
 				}				
 				m_AudioControl->setEqValue(4, gain);
+				SetEqTypeSelected(GetViewBase()->GetUIWndMgrWrapper()->GetUIAnalysisObj(), EqFlat);
 				break;
 			}
 			case UIID_GROUP_EQ_CUSTOM1:
-			case UIID_GROUP_EQ_CUSTOM2:
 			{
 				vector<int> gain;
 				gain.reserve(13);
-
 				char config_item_name[32] = {0};
-			
 				for(int i = 0; i < 13; i++)
 				{
 					sprintf(config_item_name, "custom1_index%d", i);
-					gain.push_back(m_ConfigHelper->get(config_item_name));
+					int v = m_ConfigHelper->get(config_item_name);
+					if(v == -1) v = 0;
+					gain.push_back(v);
 				}
 				for(int i = 0; i < 13; i++)
 				{
 					GetViewBase()->GetUIWndMgrWrapper()->GetUIAnalysisObj()->SetProgressItemValues(UIID_WNDID_AUDIOBOOST,1803+i,12,(gain[i]+12)/2);
-				}				
-				m_AudioControl->setEqValue(5, gain);
+				}
+				m_AudioControl->setEqValue(EqCustom1, gain);
+				SetEqTypeSelected(GetViewBase()->GetUIWndMgrWrapper()->GetUIAnalysisObj(), EqCustom1);
+				break;
+			}
+			case UIID_GROUP_EQ_CUSTOM2:
+			{
+				vector<int> gain;
+				gain.reserve(13);
+				char config_item_name[32] = {0};
+				for(int i = 0; i < 13; i++)
+				{
+					sprintf(config_item_name, "custom2_index%d", i);
+					int v = m_ConfigHelper->get(config_item_name);
+					if(v == -1) v = 0;
+					gain.push_back(v);
+				}
+				for(int i = 0; i < 13; i++)
+				{
+					GetViewBase()->GetUIWndMgrWrapper()->GetUIAnalysisObj()->SetProgressItemValues(UIID_WNDID_AUDIOBOOST,1803+i,12,(gain[i]+12)/2);
+				}
+				m_AudioControl->setEqValue(EqCustom2, gain);
+				SetEqTypeSelected(GetViewBase()->GetUIWndMgrWrapper()->GetUIAnalysisObj(), EqCustom2);
 				break;
 			}
 			case UIID_GROUP_EQ_CONT:
@@ -2561,6 +2323,10 @@ void EqView::onClick_ReturnBtn()
 		{
 			pList->SetItemString(5, 623, 1);
 		}
+		else if(m_eqmode == 6)
+		{
+			pList->SetItemString(5, 624, 1);
+		}
 		else{}
 
 		int m_listening = m_ConfigHelper->get("listening_position");
@@ -2919,6 +2685,7 @@ void EqView::onClick_SettingList()
 			pUIMgr->GetUIAnalysisObj()->ShowItem(UIID_WNDID_AUDIOBOOST, UIID_GROUP_EQ,true);
 			pUIMgr->GetUIAnalysisObj()->SetItemText(UIID_WNDID_AUDIOBOOST, UIID_AUDIO_BOOST_RETURN, 605);
 			int line = m_ConfigHelper->get("eq_mode");
+			SetEqTypeSelected(pUIMgr->GetUIAnalysisObj(), line);
 			//mList->SetCurSel(line, 0);
 
 			// if(line == 0)
@@ -2951,10 +2718,18 @@ void EqView::onClick_SettingList()
 			}
 			else
 			{
-				int tmp[] = {2, 4, -2, -10, 2, 0, 0, 2, 2, 4, 2, 4, 6};
+				/* 自定义1/自定义2 按当前 eq_mode 读各自保存的曲线 */
+				int custom_no = (line == EqCustom2) ? 2 : 1;
+				char key[32] = {0};
 				for(int i = 0; i < 13; i++)
 				{
-					pUI->SetProgressItemValues(UIID_WNDID_AUDIOBOOST, 1803+i, 12, (tmp[i]+12)/2);
+					sprintf(key, "custom%d_index%d", custom_no, i);
+					int gain = m_ConfigHelper->get(key);
+					if(gain == -1)
+					{
+						gain = 0;
+					}
+					pUI->SetProgressItemValues(UIID_WNDID_AUDIOBOOST, 1803+i, 12, (gain+12)/2);
 				}
 			}
 			
@@ -3211,7 +2986,11 @@ void EqView::OnInit_EqView()
 	{
 		pList->SetItemString(5, 623, 1);
 	}
-	else{}	
+	else if(m_eqmode == 6)
+	{
+		pList->SetItemString(5, 624, 1);
+	}
+	else{}
 
 	int  Subwoofer = m_ConfigHelper->get("subwoofer_on");
 	if(Subwoofer == 0)
