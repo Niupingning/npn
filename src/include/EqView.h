@@ -102,6 +102,10 @@ public:
 		void onClick_LoudnesBtn(long nCtrlId);
 		void onClick_Listening(long nCtrlId);
 		void onClick_Speaker(long nCtrlId);
+		void HideAllSubGroup();                        // 隐藏所有子页分组
+		void SetSpeakerBgIcon(int nPicId);             // Speaker Level 座椅图：先清后设
+		void SetListeningUi(int listening_position);   // Listening Position 页：座椅图 + 热区互斥
+		void SetTimeBgIcon(int nPicId);                // Time Alignment 座椅图：先清后设
 		void onClick_Time_Alignment(long nCtrlId);
 		void onClick_Time_Crossover(long nCtrlId);
 

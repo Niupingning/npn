@@ -206,7 +206,14 @@ void EqView::EqOnClick(CUIWndMng* pUI, long nWndId, long nCtrlId, int nBtState)
 			break;
 			case UIID_AUDIO_BOOST_CLOSE:
 			{
-				//关闭
+				HideAllSubGroup();
+
+				CUIWndMgrWrapper *pUIMgr = GetViewBase()->GetUIWndMgrWrapper();
+				if (NULL != pUIMgr)
+				{
+					pUIMgr->GetUIAnalysisObj()->ShowItem(UIID_WNDID_AUDIOBOOST, UIID_GROUP_MAINLIST, true);
+					pUIMgr->GetUIAnalysisObj()->SetItemText(UIID_WNDID_AUDIOBOOST, UIID_AUDIO_BOOST_RETURN, 18);
+				}
 				GetViewBase()->ShowWnd(UIID_WNDID_MAIN, true);
 			}
 			break;
@@ -1167,7 +1174,7 @@ void EqView::onClick_Time_Alignment(long nCtrlId)
 			if(listening_position == 0)
 			{
 				pUIMgr->GetUIAnalysisObj()->SetItemText(UIID_WNDID_AUDIOBOOST, UIID_GROUP_TIME_TYPE, 629);
-				pUIMgr->GetUIAnalysisObj()->SetItemIcon(UIID_WNDID_AUDIOBOOST, UIID_GROUP_TIME_BG, 1026, ALL_STATE);
+				SetTimeBgIcon(1026);
 				listening_position = 2;
 
 				wchar_t fl_buf1[16] = {0};
@@ -1198,7 +1205,7 @@ void EqView::onClick_Time_Alignment(long nCtrlId)
 			else if(listening_position == 1)
 			{
 				pUIMgr->GetUIAnalysisObj()->SetItemText(UIID_WNDID_AUDIOBOOST, UIID_GROUP_TIME_TYPE, 626);
-				pUIMgr->GetUIAnalysisObj()->SetItemIcon(UIID_WNDID_AUDIOBOOST, UIID_GROUP_TIME_BG, 1025, ALL_STATE);
+				SetTimeBgIcon(1025);
 				listening_position = 4;
 
 				wchar_t all_buf1[16] = {0};
@@ -1229,7 +1236,7 @@ void EqView::onClick_Time_Alignment(long nCtrlId)
 			else if(listening_position == 2)
 			{
 				pUIMgr->GetUIAnalysisObj()->SetItemText(UIID_WNDID_AUDIOBOOST, UIID_GROUP_TIME_TYPE, 628);
-				pUIMgr->GetUIAnalysisObj()->SetItemIcon(UIID_WNDID_AUDIOBOOST, UIID_GROUP_TIME_BG, 1027, ALL_STATE);
+				SetTimeBgIcon(1027);
 				listening_position = 3;	
 
 				wchar_t fr_buf1[16] = {0};
@@ -1260,7 +1267,7 @@ void EqView::onClick_Time_Alignment(long nCtrlId)
 			else if(listening_position == 3)
 			{
 				pUIMgr->GetUIAnalysisObj()->SetItemText(UIID_WNDID_AUDIOBOOST, UIID_GROUP_TIME_TYPE, 627);
-				pUIMgr->GetUIAnalysisObj()->SetItemIcon(UIID_WNDID_AUDIOBOOST, UIID_GROUP_TIME_BG, 1030, ALL_STATE);
+				SetTimeBgIcon(1030);
 				listening_position = 1;
 
 				wchar_t f_buf1[16] = {0};
@@ -1291,7 +1298,7 @@ void EqView::onClick_Time_Alignment(long nCtrlId)
 			else if(listening_position == 4)
 			{
 				pUIMgr->GetUIAnalysisObj()->SetItemText(UIID_WNDID_AUDIOBOOST, UIID_GROUP_TIME_TYPE, 630);
-				pUIMgr->GetUIAnalysisObj()->SetItemIcon(UIID_WNDID_AUDIOBOOST, UIID_GROUP_TIME_BG, 1032, ALL_STATE);
+				SetTimeBgIcon(1032);
 				listening_position = 0;
 
 				wchar_t off_buf1[16] = {0};
@@ -1324,7 +1331,7 @@ void EqView::onClick_Time_Alignment(long nCtrlId)
 			if(listening_position == 0)
 			{
 				pUIMgr->GetUIAnalysisObj()->SetItemText(UIID_WNDID_AUDIOBOOST, UIID_GROUP_TIME_TYPE, 626);
-				pUIMgr->GetUIAnalysisObj()->SetItemIcon(UIID_WNDID_AUDIOBOOST, UIID_GROUP_TIME_BG, 1025, ALL_STATE);
+				SetTimeBgIcon(1025);
 				listening_position = 4;
 
 				wchar_t all_buf1[16] = {0};
@@ -1355,7 +1362,7 @@ void EqView::onClick_Time_Alignment(long nCtrlId)
 			else if(listening_position == 1)
 			{
 				pUIMgr->GetUIAnalysisObj()->SetItemText(UIID_WNDID_AUDIOBOOST, UIID_GROUP_TIME_TYPE, 628);
-				pUIMgr->GetUIAnalysisObj()->SetItemIcon(UIID_WNDID_AUDIOBOOST, UIID_GROUP_TIME_BG, 1027, ALL_STATE);
+				SetTimeBgIcon(1027);
 				listening_position = 3;
 
 				wchar_t fr_buf1[16] = {0};
@@ -1386,7 +1393,7 @@ void EqView::onClick_Time_Alignment(long nCtrlId)
 			else if(listening_position == 2)
 			{
 				pUIMgr->GetUIAnalysisObj()->SetItemText(UIID_WNDID_AUDIOBOOST, UIID_GROUP_TIME_TYPE, 630);
-				pUIMgr->GetUIAnalysisObj()->SetItemIcon(UIID_WNDID_AUDIOBOOST, UIID_GROUP_TIME_BG, 1032, ALL_STATE);
+				SetTimeBgIcon(1032);
 				listening_position = 0;	
 
 				wchar_t off_buf1[16] = {0};
@@ -1412,7 +1419,7 @@ void EqView::onClick_Time_Alignment(long nCtrlId)
 			else if(listening_position == 3)
 			{
 				pUIMgr->GetUIAnalysisObj()->SetItemText(UIID_WNDID_AUDIOBOOST, UIID_GROUP_TIME_TYPE, 629);
-				pUIMgr->GetUIAnalysisObj()->SetItemIcon(UIID_WNDID_AUDIOBOOST, UIID_GROUP_TIME_BG, 1026, ALL_STATE);
+				SetTimeBgIcon(1026);
 				listening_position = 2;
 
 				wchar_t fl_buf1[16] = {0};
@@ -1443,7 +1450,7 @@ void EqView::onClick_Time_Alignment(long nCtrlId)
 			else if(listening_position == 4)
 			{
 				pUIMgr->GetUIAnalysisObj()->SetItemText(UIID_WNDID_AUDIOBOOST, UIID_GROUP_TIME_TYPE, 627);
-				pUIMgr->GetUIAnalysisObj()->SetItemIcon(UIID_WNDID_AUDIOBOOST, UIID_GROUP_TIME_BG, 1030, ALL_STATE);
+				SetTimeBgIcon(1030);
 				listening_position = 1;	
 
 				wchar_t f_buf1[16] = {0};
@@ -1701,7 +1708,7 @@ void EqView::onClick_Speaker(long nCtrlId)
 			if(listening_position == 0)
 			{
 				pUIMgr->GetUIAnalysisObj()->SetItemText(UIID_WNDID_AUDIOBOOST, UIID_GROUP_SPEAKER_TYPE, 629);
-				pUIMgr->GetUIAnalysisObj()->SetItemIcon(UIID_WNDID_AUDIOBOOST, UIID_GROUP_SPEAKER_BG, 1026, ALL_STATE);
+				SetSpeakerBgIcon(1026);
 				listening_position = 2;
 
 				wchar_t fl_buf1[16] = {0};
@@ -1732,7 +1739,7 @@ void EqView::onClick_Speaker(long nCtrlId)
 			else if(listening_position == 1)
 			{
 				pUIMgr->GetUIAnalysisObj()->SetItemText(UIID_WNDID_AUDIOBOOST, UIID_GROUP_SPEAKER_TYPE, 626);
-				pUIMgr->GetUIAnalysisObj()->SetItemIcon(UIID_WNDID_AUDIOBOOST, UIID_GROUP_SPEAKER_BG, 1025, ALL_STATE);
+				SetSpeakerBgIcon(1025);
 				listening_position = 4;
 
 				wchar_t all_buf1[16] = {0};
@@ -1763,7 +1770,7 @@ void EqView::onClick_Speaker(long nCtrlId)
 			else if(listening_position == 2)
 			{
 				pUIMgr->GetUIAnalysisObj()->SetItemText(UIID_WNDID_AUDIOBOOST, UIID_GROUP_SPEAKER_TYPE, 628);
-				pUIMgr->GetUIAnalysisObj()->SetItemIcon(UIID_WNDID_AUDIOBOOST, UIID_GROUP_SPEAKER_BG, 1027, ALL_STATE);
+				SetSpeakerBgIcon(1027);
 				listening_position = 3;
 
 				wchar_t fr_buf1[16] = {0};
@@ -1794,7 +1801,7 @@ void EqView::onClick_Speaker(long nCtrlId)
 			else if(listening_position == 3)
 			{
 				pUIMgr->GetUIAnalysisObj()->SetItemText(UIID_WNDID_AUDIOBOOST, UIID_GROUP_SPEAKER_TYPE, 627);
-				pUIMgr->GetUIAnalysisObj()->SetItemIcon(UIID_WNDID_AUDIOBOOST, UIID_GROUP_SPEAKER_BG, 1030, ALL_STATE);
+				SetSpeakerBgIcon(1030);
 				listening_position = 1;
 
 				wchar_t f_buf1[16] = {0};
@@ -1825,7 +1832,7 @@ void EqView::onClick_Speaker(long nCtrlId)
 			else if(listening_position == 4)
 			{
 				pUIMgr->GetUIAnalysisObj()->SetItemText(UIID_WNDID_AUDIOBOOST, UIID_GROUP_SPEAKER_TYPE, 630);
-				pUIMgr->GetUIAnalysisObj()->SetItemIcon(UIID_WNDID_AUDIOBOOST, UIID_GROUP_SPEAKER_BG, 1032, ALL_STATE);
+				SetSpeakerBgIcon(1032);
 				listening_position = 0;
 
 				wchar_t off_buf1[16] = {0};
@@ -1858,7 +1865,7 @@ void EqView::onClick_Speaker(long nCtrlId)
 			if(listening_position == 0)
 			{
 				pUIMgr->GetUIAnalysisObj()->SetItemText(UIID_WNDID_AUDIOBOOST, UIID_GROUP_SPEAKER_TYPE, 626);
-				pUIMgr->GetUIAnalysisObj()->SetItemIcon(UIID_WNDID_AUDIOBOOST, UIID_GROUP_SPEAKER_BG, 1025, ALL_STATE);
+				SetSpeakerBgIcon(1025);
 				listening_position = 4;
 
 				wchar_t all_buf1[16] = {0};
@@ -1889,7 +1896,7 @@ void EqView::onClick_Speaker(long nCtrlId)
 			else if(listening_position == 1)
 			{
 				pUIMgr->GetUIAnalysisObj()->SetItemText(UIID_WNDID_AUDIOBOOST, UIID_GROUP_SPEAKER_TYPE, 628);
-				pUIMgr->GetUIAnalysisObj()->SetItemIcon(UIID_WNDID_AUDIOBOOST, UIID_GROUP_SPEAKER_BG, 1027, ALL_STATE);
+				SetSpeakerBgIcon(1027);
 				listening_position = 3;	
 
 				wchar_t fr_buf1[16] = {0};
@@ -1920,7 +1927,7 @@ void EqView::onClick_Speaker(long nCtrlId)
 			else if(listening_position == 2)
 			{
 				pUIMgr->GetUIAnalysisObj()->SetItemText(UIID_WNDID_AUDIOBOOST, UIID_GROUP_SPEAKER_TYPE, 630);
-				pUIMgr->GetUIAnalysisObj()->SetItemIcon(UIID_WNDID_AUDIOBOOST, UIID_GROUP_SPEAKER_BG, 1032, ALL_STATE);
+				SetSpeakerBgIcon(1032);
 				listening_position = 0;
 
 				wchar_t off_buf1[16] = {0};
@@ -1946,7 +1953,7 @@ void EqView::onClick_Speaker(long nCtrlId)
 			else if(listening_position == 3)
 			{
 				pUIMgr->GetUIAnalysisObj()->SetItemText(UIID_WNDID_AUDIOBOOST, UIID_GROUP_SPEAKER_TYPE, 629);
-				pUIMgr->GetUIAnalysisObj()->SetItemIcon(UIID_WNDID_AUDIOBOOST, UIID_GROUP_SPEAKER_BG, 1026, ALL_STATE);
+				SetSpeakerBgIcon(1026);
 				listening_position = 2;	
 
 				wchar_t fl_buf1[16] = {0};
@@ -1977,7 +1984,7 @@ void EqView::onClick_Speaker(long nCtrlId)
 			else if(listening_position == 4)
 			{
 				pUIMgr->GetUIAnalysisObj()->SetItemText(UIID_WNDID_AUDIOBOOST, UIID_GROUP_SPEAKER_TYPE, 627);
-				pUIMgr->GetUIAnalysisObj()->SetItemIcon(UIID_WNDID_AUDIOBOOST, UIID_GROUP_SPEAKER_BG, 1030, ALL_STATE);
+				SetSpeakerBgIcon(1030);
 				listening_position = 1;	
 
 				wchar_t f_buf1[16] = {0};
@@ -2149,6 +2156,112 @@ void EqView::onClick_Speaker(long nCtrlId)
 	}
 }
 
+/* 进入任一子页前统一隐藏所有子页分组，避免同坐标的座椅图叠加 */
+void EqView::HideAllSubGroup()
+{
+	CUIWndMgrWrapper *pUIMgr = GetViewBase()->GetUIWndMgrWrapper();
+	if (NULL == pUIMgr)
+	{
+		LOGERR("pUIMgr is NULL");
+		return;
+	}
+
+	CUIAnalysis *pUI = pUIMgr->GetUIAnalysisObj();
+	pUI->ShowItem(UIID_WNDID_AUDIOBOOST, UIID_GROUP_FADER,        false);
+	pUI->ShowItem(UIID_WNDID_AUDIOBOOST, UIID_GROUP_LOUDNES,      false);
+	pUI->ShowItem(UIID_WNDID_AUDIOBOOST, UIID_GROUP_SPEAKERLEVEL, false);
+	pUI->ShowItem(UIID_WNDID_AUDIOBOOST, UIID_GROUP_LISTENING,    false);
+	pUI->ShowItem(UIID_WNDID_AUDIOBOOST, UIID_GROUP_TIME,         false);
+	pUI->ShowItem(UIID_WNDID_AUDIOBOOST, UIID_GROUP_EQ,           false);
+	pUI->ShowItem(UIID_WNDID_AUDIOBOOST, UIID_GROUP_SUBFOOER,     false);
+	pUI->ShowItem(UIID_WNDID_AUDIOBOOST, UIID_GROUP_CROSSVOER,    false);
+}
+
+/* Speaker Level 座椅图：先清 0 再设新图，并强制回到 NORMAL 状态 */
+void EqView::SetSpeakerBgIcon(int nPicId)
+{
+	CUIWndMgrWrapper *pUIMgr = GetViewBase()->GetUIWndMgrWrapper();
+	if (NULL == pUIMgr)
+	{
+		LOGERR("pUIMgr is NULL");
+		return;
+	}
+
+	CUIAnalysis *pUI = pUIMgr->GetUIAnalysisObj();
+	pUI->SetItemIcon(UIID_WNDID_AUDIOBOOST, UIID_GROUP_SPEAKER_BG, 0, ALL_STATE);      // 清旧图
+	pUI->SetItemIcon(UIID_WNDID_AUDIOBOOST, UIID_GROUP_SPEAKER_BG, nPicId, ALL_STATE); // 设新图
+}
+
+/* Time Alignment 座椅图：同源问题，做法与 Speaker 一致 */
+void EqView::SetTimeBgIcon(int nPicId)
+{
+	CUIWndMgrWrapper *pUIMgr = GetViewBase()->GetUIWndMgrWrapper();
+	if (NULL == pUIMgr)
+	{
+		LOGERR("pUIMgr is NULL");
+		return;
+	}
+
+	CUIAnalysis *pUI = pUIMgr->GetUIAnalysisObj();
+	pUI->SetItemIcon(UIID_WNDID_AUDIOBOOST, UIID_GROUP_TIME_BG, 0, ALL_STATE);
+	pUI->SetItemIcon(UIID_WNDID_AUDIOBOOST, UIID_GROUP_TIME_BG, nPicId, ALL_STATE);
+}
+
+/* Listening Position 页：一个入口统一刷座椅图，并保证 5 个热区只有一个高亮 */
+void EqView::SetListeningUi(int listening_position)
+{
+	CUIWndMgrWrapper *pUIMgr = GetViewBase()->GetUIWndMgrWrapper();
+	if (NULL == pUIMgr)
+	{
+		LOGERR("pUIMgr is NULL");
+		return;
+	}
+
+	CUIAnalysis *pUI = pUIMgr->GetUIAnalysisObj();
+
+	int nPicId = 1032;
+	switch(listening_position)
+	{
+		case 1:  nPicId = 1030; break;
+		case 2:  nPicId = 1026; break;
+		case 3:  nPicId = 1027; break;
+		case 4:  nPicId = 1025; break;
+		default: listening_position = 0; nPicId = 1032; break;
+	}
+
+	/* 1. 座椅图：先清后设 */
+	pUI->SetItemIcon(UIID_WNDID_AUDIOBOOST, UIID_GROUP_LISTENING_BG, 0, ALL_STATE);
+	pUI->SetItemIcon(UIID_WNDID_AUDIOBOOST, UIID_GROUP_LISTENING_BG, nPicId, ALL_STATE);
+
+	/* 2. 先全部复位，再只置一个 SELECTED */
+	pUI->SetItemState(UIID_WNDID_AUDIOBOOST, UIID_GROUP_LISTENING_OFF,    ITEM_STATE_NORMAL);
+	pUI->SetItemState(UIID_WNDID_AUDIOBOOST, UIID_GROUP_LISTENING_FRONT,  ITEM_STATE_NORMAL);
+	pUI->SetItemState(UIID_WNDID_AUDIOBOOST, UIID_GROUP_LISTENING_FRONTL, ITEM_STATE_NORMAL);
+	pUI->SetItemState(UIID_WNDID_AUDIOBOOST, UIID_GROUP_LISTENING_FRONTR, ITEM_STATE_NORMAL);
+	pUI->SetItemState(UIID_WNDID_AUDIOBOOST, UIID_GROUP_LISTENING_ALL,    ITEM_STATE_NORMAL);
+
+	if(listening_position == 0)
+	{
+		pUI->SetItemState(UIID_WNDID_AUDIOBOOST, UIID_GROUP_LISTENING_OFF, ITEM_STATE_SELECTED);
+	}
+	else if(listening_position == 1)
+	{
+		pUI->SetItemState(UIID_WNDID_AUDIOBOOST, UIID_GROUP_LISTENING_FRONT, ITEM_STATE_SELECTED);
+	}
+	else if(listening_position == 2)
+	{
+		pUI->SetItemState(UIID_WNDID_AUDIOBOOST, UIID_GROUP_LISTENING_FRONTL, ITEM_STATE_SELECTED);
+	}
+	else if(listening_position == 3)
+	{
+		pUI->SetItemState(UIID_WNDID_AUDIOBOOST, UIID_GROUP_LISTENING_FRONTR, ITEM_STATE_SELECTED);
+	}
+	else if(listening_position == 4)
+	{
+		pUI->SetItemState(UIID_WNDID_AUDIOBOOST, UIID_GROUP_LISTENING_ALL, ITEM_STATE_SELECTED);
+	}
+}
+
 void EqView::onClick_Listening(long nCtrlId)
 {
 	CUIWndMgrWrapper *pUIMgr = NULL; 
@@ -2159,33 +2272,35 @@ void EqView::onClick_Listening(long nCtrlId)
 		return;
 	}
 
+	int listening_position = 4;
 	if(nCtrlId == UIID_GROUP_LISTENING_FRONT)
 	{
-		pUIMgr->GetUIAnalysisObj()->SetItemIcon(UIID_WNDID_AUDIOBOOST, UIID_GROUP_LISTENING_BG, 1030, ALL_STATE);
-		m_AudioControl->setListeningPosition(1);
+		listening_position = 1;
 	}
 	else if(nCtrlId == UIID_GROUP_LISTENING_FRONTL)
 	{
-		pUIMgr->GetUIAnalysisObj()->SetItemIcon(UIID_WNDID_AUDIOBOOST, UIID_GROUP_LISTENING_BG, 1026, ALL_STATE);
-		m_AudioControl->setListeningPosition(2);
+		listening_position = 2;
 	}
 	else if(nCtrlId == UIID_GROUP_LISTENING_FRONTR)
 	{
-		pUIMgr->GetUIAnalysisObj()->SetItemIcon(UIID_WNDID_AUDIOBOOST, UIID_GROUP_LISTENING_BG, 1027, ALL_STATE);
-		m_AudioControl->setListeningPosition(3);
+		listening_position = 3;
 	}
 	else if(nCtrlId == UIID_GROUP_LISTENING_ALL)
 	{
-		pUIMgr->GetUIAnalysisObj()->SetItemIcon(UIID_WNDID_AUDIOBOOST, UIID_GROUP_LISTENING_BG, 1025, ALL_STATE);
-		m_AudioControl->setListeningPosition(4);
+		listening_position = 4;
 	}
 	else if(nCtrlId == UIID_GROUP_LISTENING_OFF)
 	{
-		pUIMgr->GetUIAnalysisObj()->SetItemIcon(UIID_WNDID_AUDIOBOOST, UIID_GROUP_LISTENING_BG, 1032, ALL_STATE);
-		m_AudioControl->setListeningPosition(0);
+		listening_position = 0;
 	}
-	else{}
+	else
+	{
+		return;
+	}
 
+	/* 座椅图 + 五个热区选中态一次性刷新，保证只有一个高亮 */
+	SetListeningUi(listening_position);
+	m_AudioControl->setListeningPosition(listening_position);
 } 
 
 void EqView::onClick_LoudnesBtn(long nCtrlId) 
@@ -2257,14 +2372,7 @@ void EqView::onClick_ReturnBtn()
 	}
 	else
 	{
-		pUIMgr->GetUIAnalysisObj()->ShowItem(UIID_WNDID_AUDIOBOOST, UIID_GROUP_FADER, false);
-		pUIMgr->GetUIAnalysisObj()->ShowItem(UIID_WNDID_AUDIOBOOST, UIID_GROUP_LOUDNES, false);
-		pUIMgr->GetUIAnalysisObj()->ShowItem(UIID_WNDID_AUDIOBOOST, UIID_GROUP_SPEAKERLEVEL, false);
-		pUIMgr->GetUIAnalysisObj()->ShowItem(UIID_WNDID_AUDIOBOOST, UIID_GROUP_LISTENING, false);
-		pUIMgr->GetUIAnalysisObj()->ShowItem(UIID_WNDID_AUDIOBOOST, UIID_GROUP_TIME, false);
-		pUIMgr->GetUIAnalysisObj()->ShowItem(UIID_WNDID_AUDIOBOOST, UIID_GROUP_EQ, false);
-		pUIMgr->GetUIAnalysisObj()->ShowItem(UIID_WNDID_AUDIOBOOST, UIID_GROUP_SUBFOOER, false);
-		pUIMgr->GetUIAnalysisObj()->ShowItem(UIID_WNDID_AUDIOBOOST, UIID_GROUP_CROSSVOER, false);
+		HideAllSubGroup();
 		pUIMgr->GetUIAnalysisObj()->ShowItem(UIID_WNDID_AUDIOBOOST, UIID_GROUP_MAINLIST, true);
 		pUIMgr->GetUIAnalysisObj()->SetItemText(UIID_WNDID_AUDIOBOOST, UIID_AUDIO_BOOST_RETURN, 18);
 
@@ -2414,6 +2522,8 @@ void EqView::onClick_SettingList()
 
 	pList->GetCurSel(nLine,ItemData,nCol);
 
+	HideAllSubGroup();
+
 	switch(nLine)
 	{
 		case 0:
@@ -2521,27 +2631,27 @@ void EqView::onClick_SettingList()
 			if(m_listening == 0)
 			{
 				pUIMgr->GetUIAnalysisObj()->SetItemText(UIID_WNDID_AUDIOBOOST, UIID_GROUP_SPEAKER_TYPE, 630);
-				pUIMgr->GetUIAnalysisObj()->SetItemIcon(UIID_WNDID_AUDIOBOOST, UIID_GROUP_SPEAKER_BG, 1032, ALL_STATE);
+				SetSpeakerBgIcon(1032);
 			}
 			else if(m_listening == 1)
 			{
 				pUIMgr->GetUIAnalysisObj()->SetItemText(UIID_WNDID_AUDIOBOOST, UIID_GROUP_SPEAKER_TYPE, 627);
-				pUIMgr->GetUIAnalysisObj()->SetItemIcon(UIID_WNDID_AUDIOBOOST, UIID_GROUP_SPEAKER_BG, 1030, ALL_STATE);
+				SetSpeakerBgIcon(1030);
 			}
 			else if(m_listening == 2)
 			{
 				pUIMgr->GetUIAnalysisObj()->SetItemText(UIID_WNDID_AUDIOBOOST, UIID_GROUP_SPEAKER_TYPE, 629);
-				pUIMgr->GetUIAnalysisObj()->SetItemIcon(UIID_WNDID_AUDIOBOOST, UIID_GROUP_SPEAKER_BG, 1026, ALL_STATE);
+				SetSpeakerBgIcon(1026);
 			}
 			else if(m_listening == 3)
 			{
 				pUIMgr->GetUIAnalysisObj()->SetItemText(UIID_WNDID_AUDIOBOOST, UIID_GROUP_SPEAKER_TYPE, 628);
-				pUIMgr->GetUIAnalysisObj()->SetItemIcon(UIID_WNDID_AUDIOBOOST, UIID_GROUP_SPEAKER_BG, 1027, ALL_STATE);
+				SetSpeakerBgIcon(1027);
 			}
 			else if(m_listening == 4)
 			{
 				pUIMgr->GetUIAnalysisObj()->SetItemText(UIID_WNDID_AUDIOBOOST, UIID_GROUP_SPEAKER_TYPE, 626);
-				pUIMgr->GetUIAnalysisObj()->SetItemIcon(UIID_WNDID_AUDIOBOOST, UIID_GROUP_SPEAKER_BG, 1025, ALL_STATE);
+				SetSpeakerBgIcon(1025);
 			}
 			else{}
 
@@ -2586,35 +2696,15 @@ void EqView::onClick_SettingList()
 			pUIMgr->GetUIAnalysisObj()->ShowItem(UIID_WNDID_AUDIOBOOST, UIID_GROUP_MAINLIST,false);
 			pUIMgr->GetUIAnalysisObj()->ShowItem(UIID_WNDID_AUDIOBOOST, UIID_GROUP_LISTENING,true);
 			pUIMgr->GetUIAnalysisObj()->SetItemText(UIID_WNDID_AUDIOBOOST, UIID_AUDIO_BOOST_RETURN, 603);
-			pUI->EnableItem(UIID_WNDID_AUDIOBOOST, UIID_GROUP_LISTENING_BG, false);
 
 			int m_listening = m_ConfigHelper->get("listening_position");
-			if(m_listening == 0)
+			if(m_listening < 0 || m_listening > 4)
 			{
-				pUIMgr->GetUIAnalysisObj()->SetItemIcon(UIID_WNDID_AUDIOBOOST, UIID_GROUP_LISTENING_BG, 1032, ALL_STATE);
-				pUIMgr->GetUIAnalysisObj()->SetItemState(UIID_WNDID_AUDIOBOOST, UIID_GROUP_LISTENING_OFF, ITEM_STATE_SELECTED);
+				m_listening = 0;
 			}
-			else if(m_listening == 1)
-			{
-				pUIMgr->GetUIAnalysisObj()->SetItemIcon(UIID_WNDID_AUDIOBOOST, UIID_GROUP_LISTENING_BG, 1030, ALL_STATE);
-				pUIMgr->GetUIAnalysisObj()->SetItemState(UIID_WNDID_AUDIOBOOST, UIID_GROUP_LISTENING_FRONT, ITEM_STATE_SELECTED);
-			}
-			else if(m_listening == 2)
-			{
-				pUIMgr->GetUIAnalysisObj()->SetItemIcon(UIID_WNDID_AUDIOBOOST, UIID_GROUP_LISTENING_BG, 1026, ALL_STATE);
-				pUIMgr->GetUIAnalysisObj()->SetItemState(UIID_WNDID_AUDIOBOOST, UIID_GROUP_LISTENING_FRONTL, ITEM_STATE_SELECTED);
-			}
-			else if(m_listening == 3)
-			{
-				pUIMgr->GetUIAnalysisObj()->SetItemIcon(UIID_WNDID_AUDIOBOOST, UIID_GROUP_LISTENING_BG, 1027, ALL_STATE);
-				pUIMgr->GetUIAnalysisObj()->SetItemState(UIID_WNDID_AUDIOBOOST, UIID_GROUP_LISTENING_FRONTR, ITEM_STATE_SELECTED);
-			}
-			else if(m_listening == 4)
-			{
-				pUIMgr->GetUIAnalysisObj()->SetItemIcon(UIID_WNDID_AUDIOBOOST, UIID_GROUP_LISTENING_BG, 1025, ALL_STATE);
-				pUIMgr->GetUIAnalysisObj()->SetItemState(UIID_WNDID_AUDIOBOOST, UIID_GROUP_LISTENING_ALL, ITEM_STATE_SELECTED);
-			}
-			else{}
+
+			/* 座椅图 + 热区互斥统一处理，替换原来 2591~2617 的 if/else */
+			SetListeningUi(m_listening);
 		}
 		break;
 		case 4:
@@ -2627,27 +2717,27 @@ void EqView::onClick_SettingList()
 			if(m_listening == 0)
 			{
 				pUIMgr->GetUIAnalysisObj()->SetItemText(UIID_WNDID_AUDIOBOOST, UIID_GROUP_TIME_TYPE, 630);
-				pUIMgr->GetUIAnalysisObj()->SetItemIcon(UIID_WNDID_AUDIOBOOST, UIID_GROUP_TIME_BG, 1032, ALL_STATE);
+				SetTimeBgIcon(1032);
 			}
 			else if(m_listening == 1)
 			{
 				pUIMgr->GetUIAnalysisObj()->SetItemText(UIID_WNDID_AUDIOBOOST, UIID_GROUP_TIME_TYPE, 627);
-				pUIMgr->GetUIAnalysisObj()->SetItemIcon(UIID_WNDID_AUDIOBOOST, UIID_GROUP_TIME_BG, 1030, ALL_STATE);
+				SetTimeBgIcon(1030);
 			}
 			else if(m_listening == 2)
 			{
 				pUIMgr->GetUIAnalysisObj()->SetItemText(UIID_WNDID_AUDIOBOOST, UIID_GROUP_TIME_TYPE, 629);
-				pUIMgr->GetUIAnalysisObj()->SetItemIcon(UIID_WNDID_AUDIOBOOST, UIID_GROUP_TIME_BG, 1026, ALL_STATE);
+				SetTimeBgIcon(1026);
 			}
 			else if(m_listening == 3)
 			{
 				pUIMgr->GetUIAnalysisObj()->SetItemText(UIID_WNDID_AUDIOBOOST, UIID_GROUP_TIME_TYPE, 628);
-				pUIMgr->GetUIAnalysisObj()->SetItemIcon(UIID_WNDID_AUDIOBOOST, UIID_GROUP_TIME_BG, 1027, ALL_STATE);
+				SetTimeBgIcon(1027);
 			}
 			else if(m_listening == 4)
 			{
 				pUIMgr->GetUIAnalysisObj()->SetItemText(UIID_WNDID_AUDIOBOOST, UIID_GROUP_TIME_TYPE, 626);
-				pUIMgr->GetUIAnalysisObj()->SetItemIcon(UIID_WNDID_AUDIOBOOST, UIID_GROUP_TIME_BG, 1025, ALL_STATE);
+				SetTimeBgIcon(1025);
 			}
 			else{}
 
@@ -2875,6 +2965,11 @@ void EqView::onClick_SettingList()
 		}
 		break;
 		default:
+		{
+			/* nLine 越界/未选中时把主列表恢复出来，避免 HideAllSubGroup 之后界面空白 */
+			pUIMgr->GetUIAnalysisObj()->ShowItem(UIID_WNDID_AUDIOBOOST, UIID_GROUP_MAINLIST, true);
+			pUIMgr->GetUIAnalysisObj()->SetItemText(UIID_WNDID_AUDIOBOOST, UIID_AUDIO_BOOST_RETURN, 18);
+		}
 		break;
 	}
 }
