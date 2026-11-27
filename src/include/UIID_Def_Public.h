@@ -78,26 +78,27 @@ const int UIID_SPLIT_NO_DEVICE      = 1048; //No Device
 
  /* title public Id*/
 // const int UIID_PUBLIC_SETTINGH_BIN = 5;  //顶栏设置按钮
-// const int UIID_PUBLIC_DATE_BIN = 2;      //日期
-// const int UIID_PUBLIC_WEEK_BIN = 3;      //星期
-// const int UIID_PUBLIC_TIME_BIN = 4;      //时间
+const int UIID_PUBLIC_DATE_BIN = 2;      //日期
+const int UIID_PUBLIC_WEEK_BIN = 3;      //星期
+const int UIID_PUBLIC_TIME_BIN = 4;      //时间
 const int UIID_PUBLIC_SETTINGH_BIN = 1306;  //设置
-const int UIID_PUBLIC_DATE_BIN = 2009;      //日期
-const int UIID_PUBLIC_WEEK_BIN = 2010;      //星期
-const int UIID_PUBLIC_TIME_BIN = 2011;      //时间
+// const int UIID_PUBLIC_DATE_BIN = 2009;      //日期
+// const int UIID_PUBLIC_WEEK_BIN = 2010;      //星期
+// const int UIID_PUBLIC_TIME_BIN = 2011;      //时间
 const int UIID_PUBLIC_CLOSE_BIN = 2212;     //顶栏关闭（回主界面）
 
 /** audio popo public id */
-// const int UIID_PUBLIC_AUIDO_POP_BAR= 408;      //音量BAR
-// const int UIID_PUBLIC_AUIDO_POP_VALUE= 407;    //音量值
-// const int UIID_PUBLIC_AUIDO_POP_ADD= 406;    //音量+
-// const int UIID_PUBLIC_AUIDO_POP_SUB= 405;    //音量值-
-// const int UIID_PUBLIC_AUIDO_POP_PIC= 404;    //音量图片
-const int UIID_PUBLIC_AUIDO_POP_BAR= 2018;      //音量BAR
-const int UIID_PUBLIC_AUIDO_POP_VALUE= 2017;    //音量值
-const int UIID_PUBLIC_AUIDO_POP_ADD= 2016;    //音量+
-const int UIID_PUBLIC_AUIDO_POP_SUB= 2015;    //音量值-
-const int UIID_PUBLIC_AUIDO_POP_PIC= 2014;    //音量图片
+const int UIID_PUBLIC_AUIDO_POP_SURCE_NAME= 409; //音量条显示源名称
+const int UIID_PUBLIC_AUIDO_POP_BAR= 408;      //音量BAR
+const int UIID_PUBLIC_AUIDO_POP_VALUE= 407;    //音量值
+const int UIID_PUBLIC_AUIDO_POP_ADD= 406;    //音量+
+const int UIID_PUBLIC_AUIDO_POP_SUB= 405;    //音量值-
+const int UIID_PUBLIC_AUIDO_POP_PIC= 404;    //音量图片
+// const int UIID_PUBLIC_AUIDO_POP_BAR= 2018;      //音量BAR
+// const int UIID_PUBLIC_AUIDO_POP_VALUE= 2017;    //音量值
+// const int UIID_PUBLIC_AUIDO_POP_ADD= 2016;    //音量+
+// const int UIID_PUBLIC_AUIDO_POP_SUB= 2015;    //音量值-
+// const int UIID_PUBLIC_AUIDO_POP_PIC= 2014;    //音量图片
 
 const int UIID_PUBLIC_AUIDO_POP_GROUP= 400;    //音量分组
 

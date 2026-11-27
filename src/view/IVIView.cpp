@@ -36,7 +36,7 @@ int g_nPicArry[11] = {50,51,52,53,54,55,56,57,58,59,60};
 
 IVIView::IVIView()
 : m_ViewController(NULL)
-, m_nCurrWnd(0)
+, m_nCurrWnd(1)
 , m_nLastWnd(1)
 , m_HomeView(this)
 , m_SettingView(this)
@@ -186,6 +186,8 @@ void IVIView::ShowFirstWnd(std::string strParam)
 	{
 		ShowWnd(UIID_WNDID_MAIN, true);
 	}*/
+
+	OnHideAudio_Pop();
 
 	ShowWnd(UIID_WNDID_MAIN, true);
 	
@@ -602,6 +604,7 @@ void IVIView::OnShow(LONG dwWndId, bool bShow, int nStyle)
 	LOGFILE("OnShow wnd=%d bShow=%d", dwWndId, (int)bShow);
 	//EnableAlphaBlending(true);
 	//m_RadioView.SendMeterInfoDataOFBreakAuto();
+	OnHideAudio_Pop();  //隐藏音量弹窗
 	SetCurrWnd(dwWndId);
 	InitWorkWnd(dwWndId);
 }
@@ -926,6 +929,10 @@ void IVIView::OnHandle_PopAudio(int nToWard)
 		wchar_t wszBuf[TEXT_BUF_LEN] = {0};
 		swprintf(wszBuf, TEXT_BUF_LEN, L"%d", nBtVolume);
 		pUIAnalysis->SetItemText(nCurWnd, UIID_PUBLIC_AUIDO_POP_VALUE, wszBuf); 
+
+		swprintf(wszBuf, TEXT_BUF_LEN, L"%s", "Talking");
+		pUIAnalysis->SetItemText(nCurWnd, UIID_PUBLIC_AUIDO_POP_SURCE_NAME, wszBuf);
+
 		pUIAnalysis->SetProgressItemValues(nCurWnd, UIID_PUBLIC_AUIDO_POP_BAR, 39, nBtVolume-1);
 	}
 	else
@@ -964,6 +971,10 @@ void IVIView::OnHandle_PopAudio(int nToWard)
 		//更新UI
 		wchar_t wszBuf[TEXT_BUF_LEN] = {0};
 		swprintf(wszBuf, TEXT_BUF_LEN, L"%d", nMedioVolume);
+
+		swprintf(wszBuf, TEXT_BUF_LEN, L"%s", "Main");
+		pUIAnalysis->SetItemText(nCurWnd, UIID_PUBLIC_AUIDO_POP_SURCE_NAME, wszBuf);
+		
 		pUIAnalysis->SetItemText(nCurWnd, UIID_PUBLIC_AUIDO_POP_VALUE, wszBuf); 
 		pUIAnalysis->SetProgressItemValues(nCurWnd, UIID_PUBLIC_AUIDO_POP_BAR, 39, nMedioVolume-1);
 	}
