@@ -979,6 +979,25 @@ void BTView::BTInitPhoneWorkWnd()
 	}
 	//pUIMgr->GetUIAnalysisObj()->SetItemIcon(UIID_WNDID_BT_PHONE,UIID_BT_LEFTBAR_NUMKEYBOARD,328,ITEM_STATE_NORMAL);
 
+	/* 蓝牙已连接时，首次进入电话界面要主动把顶栏设备名显示出来并刷新文本 */
+	BTData &mData = BTData::GetInstance();
+	int nBTConnectStatus = mData.GetBtConnectStatus();
+
+	if(nBTConnectStatus == 2)
+	{
+		char bt_device_name[BT_MAX_LOCAL_NAME_LENGTH] = {"pioneer"};
+		mData.GetBtDeviceName(bt_device_name);
+
+		pUIMgr->GetUIAnalysisObj()->ShowItem(UIID_WNDID_BT_PHONE, UIID_BT_APPTOPBAR_DEVICENAME, true);
+
+		if(strlen(bt_device_name) > 0)
+		{
+			char out_str[128] = {0};
+			size_t out_len = 128;
+			ConverDecode(bt_device_name, out_str, out_len);
+			pUIMgr->GetUIAnalysisObj()->SetItemText(UIID_WNDID_BT_PHONE, UIID_BT_APPTOPBAR_DEVICENAME, (wchar_t*)out_str);
+		}
+	}
 }
 
 void BTView::BTPhoneOnClick(CUIWndMng* pUI, long nWndId, long nCtrlId, int nBtState)
