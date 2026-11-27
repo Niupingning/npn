@@ -188,6 +188,8 @@ void IVIView::ShowFirstWnd(std::string strParam)
 	}*/
 
 	ShowWnd(UIID_WNDID_MAIN, true);
+	
+	SetWindow_BK(UIID_WNDID_AVM,UUID_BACK_PIC);
 }
 
 bool IVIView::OnMouseMove(POINT point)
@@ -722,6 +724,64 @@ void IVIView::OnSplitScreenChange(int nSplit, int nAppType)
 	}
 }
 
+void IVIView::SendVrKeyEvent(int nEvent)
+{
+	if (NULL == m_ViewController)
+	{
+		LOGFILE("VR evt=%d: m_ViewController NULL", nEvent);
+		return;
+	}
+
+	HomeData &mData = HomeData::GetInstance();
+	int nCpShow = 0;
+	int nAaShow = 0;
+	int nCpConn = 0;
+	int nAaConn = 0;
+	mData.GetINTData(INT_CARPLAYSHOWSTATUS, nCpShow);
+	mData.GetINTData(INT_AASHOWSTATUS, nAaShow);
+	mData.GetINTData(INT_CARPLAYCONNECTSTATUS, nCpConn);
+	mData.GetINTData(INT_ANDRIODCONNECTSTATUS, nAaConn);
+
+	LOGFILE("VR evt=%d cp(conn=%d show=%d) aa(conn=%d show=%d)", nEvent, nCpConn, nCpShow, nAaConn, nAaShow);
+
+	bool bToCp = false;
+	bool bToAa = false;
+
+	// 谁在前台就给谁：防 connect 残留时误发给没会话的一方
+	if ((1 == nCpShow) && (1 == nCpConn))
+	{
+		bToCp = true;
+	}
+	else if ((1 == nAaShow) && (1 == nAaConn))
+	{
+		bToAa = true;
+	}
+	// 都在后台：谁连着给谁
+	else if (1 == nCpConn)
+	{
+		bToCp = true;
+	}
+	else if (1 == nAaConn)
+	{
+		bToAa = true;
+	}
+
+	if (bToCp)
+	{
+		m_ViewController->SendCarPlayData(APP_SERVER_CP_VR_KEY, nEvent);
+		LOGFILE("VR evt=%d -> CP", nEvent);
+	}
+	else if (bToAa)
+	{
+		m_ViewController->SendAndroidautoData(APP_SERVER_AA_VR_KEY, nEvent);
+		LOGFILE("VR evt=%d -> AA", nEvent);
+	}
+	else
+	{
+		LOGFILE("VR evt=%d: no CP/AA connected, drop", nEvent);
+	}
+}
+
 void IVIView::OnHandleKey(T_APP_MSG *msg)
 {
 	//按键值 0:空按键 1:主菜单 2:确定 3:返回/退出 4:向左 5:向右 6:向上 7:向下 8:ivi显示仪表信息控制 9:语音 10:模式/主题切换
@@ -774,8 +834,7 @@ void IVIView::OnHandleKey(T_APP_MSG *msg)
 			break;
 			case 21: // VR 按键
 			{
-				// 
-				// m_HomeView.HomeOnClick(nullptr, UIID_WNDID_MAIN, UIID_HOME_AVM, 1);
+				SendVrKeyEvent(1);   // 只做按下；长按(2)/抬起(3) 预留，不调用
 			}
 			break;
 			default:

@@ -530,7 +530,7 @@ bool HomeDataPacket::HandleSystemData(T_STR_DATA_PACKET tPacket, T_APP_MSG& msg)
 				m_tKeyInfo.nKeyStatus = tPacket.Buf[1];
 				mData.SaveKeyValue(m_tKeyInfo);
 				int nACCStatus = 1;
-				mData.GetINTData(INT_ACCSTATUS,nACCStatus);
+				//mData.GetINTData(INT_ACCSTATUS,nACCStatus);
 				LOGDBG("nACCStatus = %d",nACCStatus);
 				if((m_tKeyInfo.nKeyType > 0) && (m_tKeyInfo.nKeyStatus > 0))
 				{

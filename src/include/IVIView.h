@@ -180,6 +180,8 @@ private:
 	void UpdateHomeContenInfo(const int nCtrlId, const int nBtStat, const bool nShow);
 
 	void OnTimer_DemoView();
+
+	void SendVrKeyEvent(int nEvent);   // VR键→AA/CP：1=按下（长按/抬起预留）
 private:
 	IVIController* m_ViewController;
 
