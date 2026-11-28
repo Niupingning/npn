@@ -289,7 +289,6 @@ void RadioView::OnClickUpdateRadioGroup(CUIWndMng* pUI, long nWndId, long nCtrlI
 		{
 			if(nBtState == 1)
 			{
-				GetViewBase()->ShowWnd(UIID_WNDID_RADIO, false);
 				GetViewBase()->ShowWnd(UIID_WNDID_MAIN, true);
 			}
 			break;

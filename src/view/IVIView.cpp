@@ -1466,10 +1466,20 @@ void IVIView::SendBtAudio_Pause()
 // 分屏/全屏切换统一入口
 void IVIView::ShowSplitWnd(bool bSplit)
 {
+	int nCurWnd = GetCurrWnd();
+	bool bInCpaa = (UIID_WNDID_BLACK == nCurWnd) || (UIID_WNDID_SPLIT == nCurWnd);
+	bool bCurSplit = (UIID_WNDID_SPLIT == nCurWnd);
+	if (bInCpaa && (IVI_SOURCE_CPAA == Get_CurSource()) && (bSplit == bCurSplit))
+	{
+		LOGDBG("ShowSplitWnd skip: already target split=%d curWnd=%d", bSplit, nCurWnd);
+		LOGFILE("ShowSplitWnd skip: already target split=%d curWnd=%d", bSplit, nCurWnd);
+		return;
+	}
+
 	CUIWndMgrWrapper* pUI = GetUIWndMgrWrapper();
-	long nCurWnd = (NULL != pUI) ? (long)pUI->GetCurWndID() : -1;
-	LOGDBG("ShowSplitWnd bSplit=%d curWnd=%ld", bSplit, nCurWnd);
-	LOGFILE("ShowSplitWnd bSplit=%d curWnd=%ld", bSplit, nCurWnd);
+	long nTopWnd = (NULL != pUI) ? (long)pUI->GetCurWndID() : -1;
+	LOGDBG("ShowSplitWnd bSplit=%d curWnd=%ld", bSplit, nTopWnd);
+	LOGFILE("ShowSplitWnd bSplit=%d curWnd=%ld", bSplit, nTopWnd);
     if (bSplit)
     {
 		SetVideoLayerVisible(false);
@@ -1520,6 +1530,7 @@ void IVIView::CloseSplitWnd()
 	KillTimer(TIMERID_SPLIT_REPAINT);
 	KillTimer(TIMERID_SPLIT_WATCHDOG);
 	m_nSplitRepaintCnt = 0;
+	m_nSplitFixCnt = 0;
 
 	CUIWndMgrWrapper* pUI = GetUIWndMgrWrapper();
 	if (NULL == pUI)

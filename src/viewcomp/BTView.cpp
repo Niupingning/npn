@@ -875,7 +875,6 @@ void BTView::OnClick_BTMusicPlayWnd(const int nCtrlId, const int nBtStat, const 
 		case UIID_BT_APPTOPBAR_CLOSE:   //顶栏关闭(1109)
 		case UIID_PUBLIC_CLOSE_BIN:     //顶栏关闭(2212)
 		{
-			// GetViewBase()->ShowWnd(UIID_WNDID_BT_MUSIC, false);
 			GetViewBase()->ShowWnd(UIID_WNDID_MAIN, true);
 		}
 		break;
@@ -1006,8 +1005,6 @@ void BTView::BTPhoneOnClick(CUIWndMng* pUI, long nWndId, long nCtrlId, int nBtSt
 
 	if ((UIID_BT_APPTOPBAR_CLOSE == nCtrlId) || (UIID_PUBLIC_CLOSE_BIN == nCtrlId))
 	{
-		GetViewBase()->ShowWnd(UIID_WNDID_BT_PHONE, false);
-		GetViewBase()->ShowWnd(UIID_WNDID_BT_MUSIC, false);
 		GetViewBase()->ShowWnd(UIID_WNDID_MAIN, true);
 		return;
 	}
