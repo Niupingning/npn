@@ -727,6 +727,51 @@ void IVIView::OnSplitScreenChange(int nSplit, int nAppType)
 	}
 }
 
+// VR 键把连着的 AA/CP 抬回前台：先发拉起命令，本地按分屏/全屏状态抬窗
+void IVIView::RaiseCpaaFront(int nAppType)
+{
+	if (NULL == m_ViewController)
+	{
+		LOGFILE("RaiseCpaaFront: m_ViewController NULL, appType=%d", nAppType);
+		return;
+	}
+
+	HomeData &mData = HomeData::GetInstance();
+
+	// 离开当前音源收尾（收音/USB/蓝牙音乐暂停、静音等）；已是 CPAA 就不再走离开音源，避免被 hide
+	int nCurSource = Get_CurSource();
+	if (IVI_SOURCE_CPAA != nCurSource)
+	{
+		OnHandle_Source(nCurSource);
+	}
+
+	// 读分屏状态：0 全屏 1 分屏
+	int nSplit = 0;
+	if (APP_STATUS_CP == nAppType)
+	{
+		mData.GetINTData(INT_CP_SPLITSTATUS, nSplit);
+	}
+	else if (APP_STATUS_AA == nAppType)
+	{
+		mData.GetINTData(INT_AA_SPLITSTATUS, nSplit);
+	}
+
+	// 通知服务端拉起显示
+	if (APP_STATUS_CP == nAppType)
+	{
+		m_ViewController->SendCarPlayData(APP_APPSERVICE_OPENCARPLAY_TYPE, 1);
+		LOGFILE("RaiseCpaaFront: OPEN CP=1, split=%d", nSplit);
+	}
+	else if (APP_STATUS_AA == nAppType)
+	{
+		m_ViewController->SendAndroidautoData(APP_APPSERVICE_OPENAA_TYPE, 1);
+		LOGFILE("RaiseCpaaFront: OPEN AA=1, split=%d", nSplit);
+	}
+	ShowSplitWnd(1 == nSplit);
+
+	Save_CurSource(IVI_SOURCE_CPAA);
+}
+
 void IVIView::SendVrKeyEvent(int nEvent)
 {
 	if (NULL == m_ViewController)
@@ -771,11 +816,13 @@ void IVIView::SendVrKeyEvent(int nEvent)
 
 	if (bToCp)
 	{
+		RaiseCpaaFront(APP_STATUS_CP);                       // 先把 CP 抬回前台
 		m_ViewController->SendCarPlayData(APP_SERVER_CP_VR_KEY, nEvent);
 		LOGFILE("VR evt=%d -> CP", nEvent);
 	}
 	else if (bToAa)
 	{
+		RaiseCpaaFront(APP_STATUS_AA);                       // 先把 AA 抬回前台
 		m_ViewController->SendAndroidautoData(APP_SERVER_AA_VR_KEY, nEvent);
 		LOGFILE("VR evt=%d -> AA", nEvent);
 	}
@@ -974,7 +1021,7 @@ void IVIView::OnHandle_PopAudio(int nToWard)
 
 		swprintf(wszBuf, TEXT_BUF_LEN, L"%s", "Main");
 		pUIAnalysis->SetItemText(nCurWnd, UIID_PUBLIC_AUIDO_POP_SURCE_NAME, wszBuf);
-		
+
 		pUIAnalysis->SetItemText(nCurWnd, UIID_PUBLIC_AUIDO_POP_VALUE, wszBuf); 
 		pUIAnalysis->SetProgressItemValues(nCurWnd, UIID_PUBLIC_AUIDO_POP_BAR, 39, nMedioVolume-1);
 	}

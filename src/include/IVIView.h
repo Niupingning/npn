@@ -182,6 +182,7 @@ private:
 	void OnTimer_DemoView();
 
 	void SendVrKeyEvent(int nEvent);   // VR键→AA/CP：1=按下（长按/抬起预留）
+	void RaiseCpaaFront(int nAppType); // VR拉起：把连着的 AA/CP 抬到前台
 private:
 	IVIController* m_ViewController;
 
