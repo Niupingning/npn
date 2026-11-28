@@ -727,6 +727,36 @@ void IVIView::OnSplitScreenChange(int nSplit, int nAppType)
 	}
 }
 
+// home 硬按键：完整收尾回主界面
+void IVIView::LeaveToHome()
+{
+	// 1. 离开当前音源收尾：
+	int nCurSource = Get_CurSource();
+	OnHandle_Source(nCurSource);
+
+	// 2. 停掉分屏补画/看护定时器，避免回主页后又被定时器抬回来
+	KillTimer(TIMERID_SPLIT_REPAINT);
+	KillTimer(TIMERID_SPLIT_WATCHDOG);
+	m_nSplitRepaintCnt = 0;
+
+	// 3. 隐藏音量弹窗
+	OnHideAudio_Pop();
+
+	// 4. 藏分屏窗(30)、藏全屏黑窗(13)，抬主页窗(1)
+	ShowWnd(UIID_WNDID_SPLIT, false);
+	ShowWnd(UIID_WNDID_BLACK, false);
+	ShowWnd(UIID_WNDID_MAIN, true);
+
+	// 5. 恢复 fileplay 视频层，并重绘
+	SetVideoLayerVisible(true);
+	DrawAllItem();
+
+	// 6. 音源复位为主界面
+	Save_CurSource(IVI_SOURCE_HOME);
+
+	LOGFILE("LeaveToHome: source=%d -> HOME", nCurSource);
+}
+
 // VR 键把连着的 AA/CP 抬回前台：先发拉起命令，本地按分屏/全屏状态抬窗
 void IVIView::RaiseCpaaFront(int nAppType)
 {
@@ -848,9 +878,10 @@ void IVIView::OnHandleKey(T_APP_MSG *msg)
 			case 1:
 			{
 				//主界面
-				OnHideAudio_Pop();  //隐藏音量弹窗
-				ShowWnd(UIID_WNDID_SPLIT, false);
-				ShowWnd(UIID_WNDID_MAIN, true);
+				LeaveToHome();
+				// OnHideAudio_Pop();  //隐藏音量弹窗
+				// ShowWnd(UIID_WNDID_SPLIT, false);
+				// ShowWnd(UIID_WNDID_MAIN, true);
 			}
 			break;
 			case 3:
