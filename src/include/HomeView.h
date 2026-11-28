@@ -63,6 +63,7 @@ public:
 	bool UpdateHomeContenAnimaInfo(T_APP_MSG* msg=nullptr);
 
 	void KillTimer_AvmShow();
+	void KillTimer_LinkShowConfirm();
 	void OnStartAvm_View(int nView);
 	void OnStart_AVM();
 

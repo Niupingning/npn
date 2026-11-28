@@ -119,6 +119,8 @@ bool HomeView::Update_CP_Show(T_APP_MSG* msg)
 
 		((IVIView*)GetViewBase())->SetVideoLayerVisible(true);
 		KillTimer(TIMERID_CPAA_SIGN);
+		KillTimer(TIMERID_CPAA_CONFIRM);
+		m_nWaitShowLink = 0;
 	}
 	else if(UIID_WNDID_BLACK == msg->Param0)
 	{
@@ -407,7 +409,6 @@ void HomeView::OnTimer(uint32_t id)
 				LOGFILE("AA show confirm timeout, show=%d", nShow);
 				if (1 != nShow)
 				{
-					mData.SaveINTData(INT_AA_LINK_VALID, 0);   // 只作废有效性，不动原始连接状态
 					bNeedBack = true;
 				}
 			}
@@ -417,7 +418,6 @@ void HomeView::OnTimer(uint32_t id)
 				LOGFILE("CP show confirm timeout, show=%d", nShow);
 				if (1 != nShow)
 				{
-					mData.SaveINTData(INT_CP_LINK_VALID, 0);
 					bNeedBack = true;
 				}
 			}
@@ -668,6 +668,12 @@ bool HomeView::Update_CPAA_RefreshIcon(T_APP_MSG* msg)
 void HomeView::KillTimer_AvmShow()
 {
 	KillTimer(TIMERID_AVM_SIGN);
+}
+
+void HomeView::KillTimer_LinkShowConfirm()
+{
+	KillTimer(TIMERID_CPAA_CONFIRM);
+	m_nWaitShowLink = 0;
 }
 
 void HomeView::OnStartAvm_View(int nView)

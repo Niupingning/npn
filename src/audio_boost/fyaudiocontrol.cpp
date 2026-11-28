@@ -77,7 +77,7 @@ static unsigned short adEqFreqArray3[AUDIO_EFFECT_EQUALIZER_CHANNEL_CONFIG_PARAM
                                                         25, 31, 40, 50, 63, 80, 100, 125, 160, 200, 250};        //28 - 38 subwoofer LPF  standard mode crossover                                                         
 
 static struct AudioEqInfoStruct adEqInfo[EqModeMax]={
-    {EqSuperBass, 13, {0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12}, {8, 8, 6, 6, 2, 0, 0, 0, 0, 2, 2, 4, 2}},
+    {EqSuperBass, 13, {0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12}, {4, 4, 2, 2, 0, 0, 0, 0, 0, 2, 2, 4, 2}},
     {EqPowerful, 13,  {0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12}, {2, 6, 4, 2, 0, -2, 0, 2, 2, 2, 4, 4, 6}},
     {EqNatural, 13,   {0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12}, {-6, 2, 2, 2, 0, 0, 2, 2, -2, -2, 2, 2, 4}},
     {EqVocal, 13,     {0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12}, {-6, -2, 0, 4, 6, 6, 2, 0, 2, 4, 4, 2, 0}},

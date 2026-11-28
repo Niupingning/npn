@@ -738,6 +738,7 @@ void IVIView::LeaveToHome()
 	KillTimer(TIMERID_SPLIT_REPAINT);
 	KillTimer(TIMERID_SPLIT_WATCHDOG);
 	m_nSplitRepaintCnt = 0;
+	m_HomeView.KillTimer_LinkShowConfirm();
 
 	// 3. 隐藏音量弹窗
 	OnHideAudio_Pop();
@@ -1531,6 +1532,7 @@ void IVIView::CloseSplitWnd()
 	KillTimer(TIMERID_SPLIT_WATCHDOG);
 	m_nSplitRepaintCnt = 0;
 	m_nSplitFixCnt = 0;
+	m_HomeView.KillTimer_LinkShowConfirm();
 
 	CUIWndMgrWrapper* pUI = GetUIWndMgrWrapper();
 	if (NULL == pUI)
